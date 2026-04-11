@@ -58,11 +58,11 @@ export default function AdminTabs() {
         }}
       />
       <Tabs.Screen
-        name="pricing"
+        name="dateslots"
         options={{
-          title: 'Pricing',
+          title: 'Date Slots',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pricetag-outline" size={size} color={color} />
+            <Ionicons name="calendar-outline" size={size} color={color} />
           ),
         }}
       />

@@ -1,19 +1,16 @@
-import { RequestStatus, Role } from './enums';
-
-export { RequestStatus, Role };
-
 export interface User {
   id: string;
   name: string;
   phone: string;
   email?: string;
-  role: Role;
+  role: 'CITIZEN' | 'VENDOR' | 'ADMIN';
   address: string;
 }
 
 export interface Request {
   id: string;
   userId: string;
+  user?: User;
   address: string;
   contactPhone: string;
   preferredDate: string;
@@ -29,14 +26,7 @@ export interface Request {
   updatedAt: string;
 }
 
-export interface AuditLog {
-  id: string;
-  action: string;
-  actorRole: Role;
-  actorId: string;
-  timestamp: string;
-  meta?: Record<string, any>;
-}
+export type RequestStatus = 'CREATED' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export interface TimeSlot {
   slot: string;
@@ -54,27 +44,6 @@ export interface DateSlot {
   updatedAt: string;
 }
 
-export interface AuthResponse {
-  token: string;
-  user: User;
-}
-
-export interface CreateRequestPayload {
-  address: string;
-  contactPhone: string;
-  preferredDate: string;
-  preferredTimeSlot: string;
-  notes?: string;
-  imageUrl?: string;
-}
-
-export interface UpdateRequestStatusPayload {
-  status: RequestStatus;
-  scheduledDate?: string;
-  scheduledTimeSlot?: string;
-  completedNotes?: string;
-}
-
 export interface AvailableSlot {
   date: string;
   timeSlots: {
@@ -84,17 +53,21 @@ export interface AvailableSlot {
   }[];
 }
 
-export interface TicketCount {
-  date: string;
-  totalTickets: number;
-  totalCapacity: number;
-  available: number;
-  slots: {
-    time: string;
-    booked: number;
-    max: number;
-    available: number;
-  }[];
+export interface AuthResponse {
+  token: string;
+  user: User;
+}
+
+export interface LoginRequest {
+  phone: string;
+  otp: string;
+}
+
+export interface UpdateRequestStatusPayload {
+  status: RequestStatus;
+  scheduledDate?: string;
+  scheduledTimeSlot?: string;
+  completedNotes?: string;
 }
 
 export interface CreateDateSlotPayload {
@@ -111,4 +84,17 @@ export interface GenerateSlotsPayload {
   days?: number;
   timeSlots?: string[];
   maxTickets?: number;
+}
+
+export interface TicketCount {
+  date: string;
+  totalTickets: number;
+  totalCapacity: number;
+  available: number;
+  slots: {
+    time: string;
+    booked: number;
+    max: number;
+    available: number;
+  }[];
 }

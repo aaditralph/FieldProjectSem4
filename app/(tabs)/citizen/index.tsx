@@ -4,13 +4,14 @@ import { Request, RequestStatus } from '@/src/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Image,
 } from 'react-native';
 
 export default function CitizenHomeScreen() {
@@ -24,10 +25,6 @@ export default function CitizenHomeScreen() {
       loadRequests();
     }, [])
   );
-
-  useEffect(() => {
-    loadRequests();
-  }, []);
 
   const loadRequests = async () => {
     try {
@@ -60,14 +57,30 @@ export default function CitizenHomeScreen() {
     }
   };
 
+  const getStatusLabel = (status: RequestStatus) => {
+    switch (status) {
+      case RequestStatus.CREATED:
+        return 'Pending';
+      case RequestStatus.SCHEDULED:
+        return 'Scheduled';
+      case RequestStatus.IN_PROGRESS:
+        return 'In Progress';
+      case RequestStatus.COMPLETED:
+        return 'Completed';
+      case RequestStatus.CANCELLED:
+        return 'Cancelled';
+      default:
+        return status;
+    }
+  };
+
   const formatDate = (dateString: string) => {
+    if (!dateString) return 'Not set';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'short',
       year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
     });
   };
 
@@ -77,20 +90,38 @@ export default function CitizenHomeScreen() {
       onPress={() => router.push(`/citizen/request/${item.id}` as any)}
     >
       <View style={styles.cardHeader}>
-        <Text style={styles.category}>{item.category}</Text>
+        <View style={styles.headerLeft}>
+          <Text style={styles.dateLabel}>Preferred Date</Text>
+          <Text style={styles.dateText}>{formatDate(item.preferredDate)}</Text>
+        </View>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{item.status}</Text>
+          <Text style={styles.statusText}>{getStatusLabel(item.status)}</Text>
         </View>
       </View>
+
       <View style={styles.cardBody}>
-        <Text style={styles.detail}>Quantity: {item.quantity} items</Text>
-        <Text style={styles.detail}>Address: {item.address}</Text>
-        <Text style={styles.detail}>Created: {formatDate(item.createdAt)}</Text>
-        {item.scheduledTime && (
-          <Text style={styles.detail}>
-            Scheduled: {formatDate(item.scheduledTime)}
-          </Text>
-        )}
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Time:</Text>
+          <Text style={styles.infoValue}>{item.preferredTimeSlot}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Address:</Text>
+          <Text style={styles.infoValue} numberOfLines={2}>{item.address}</Text>
+        </View>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>Contact:</Text>
+          <Text style={styles.infoValue}>{item.contactPhone}</Text>
+        </View>
+      </View>
+
+      {item.imageUrl && (
+        <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
+      )}
+
+      <View style={styles.cardFooter}>
+        <Text style={styles.createdAt}>
+          Submitted on {formatDate(item.createdAt)}
+        </Text>
       </View>
     </TouchableOpacity>
   );
@@ -106,8 +137,8 @@ export default function CitizenHomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, {user?.name}!</Text>
-        <Text style={styles.subtext}>Your e-waste requests</Text>
+        <Text style={styles.greeting}>Hello, {user?.name || 'Resident'}!</Text>
+        <Text style={styles.subtext}>Your e-waste pickup requests</Text>
       </View>
 
       <FlatList
@@ -122,11 +153,18 @@ export default function CitizenHomeScreen() {
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No requests yet</Text>
             <Text style={styles.emptySubtext}>
-              Create your first e-waste recycling request
+              Tap the + button below to create your first e-waste pickup request
             </Text>
           </View>
         }
       />
+
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => router.push('/citizen/create' as any)}
+      >
+        <Text style={styles.fabText}>+</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -159,26 +197,35 @@ const styles = StyleSheet.create({
   },
   list: {
     padding: 16,
+    paddingBottom: 100,
   },
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+    overflow: 'hidden',
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
+    alignItems: 'flex-start',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
-  category: {
-    fontSize: 18,
+  headerLeft: {},
+  dateLabel: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    marginBottom: 4,
+  },
+  dateText: {
+    fontSize: 16,
     fontWeight: '600',
     color: '#2c3e50',
   },
@@ -193,15 +240,43 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cardBody: {
-    gap: 6,
+    padding: 16,
+    gap: 8,
   },
-  detail: {
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  infoLabel: {
+    width: 70,
     fontSize: 14,
     color: '#7f8c8d',
+  },
+  infoValue: {
+    flex: 1,
+    fontSize: 14,
+    color: '#2c3e50',
+    fontWeight: '500',
+  },
+  cardImage: {
+    width: '100%',
+    height: 150,
+    resizeMode: 'cover',
+  },
+  cardFooter: {
+    padding: 12,
+    backgroundColor: '#f8f9fa',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  createdAt: {
+    fontSize: 12,
+    color: '#95a5a6',
   },
   empty: {
     alignItems: 'center',
     marginTop: 60,
+    padding: 20,
   },
   emptyText: {
     fontSize: 18,
@@ -212,5 +287,28 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#7f8c8d',
     marginTop: 8,
+    textAlign: 'center',
+  },
+  fab: {
+    position: 'absolute',
+    right: 20,
+    bottom: 20,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#27ae60',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  fabText: {
+    fontSize: 32,
+    color: '#fff',
+    fontWeight: '300',
+    marginTop: -4,
   },
 });

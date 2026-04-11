@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const compression = require('compression');
 const morgan = require('morgan');
+const path = require('path');
 const connectDB = require('./config/db');
 
 // Route imports
@@ -13,6 +14,12 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const driveRoutes = require('./routes/driveRoutes');
 const pricingRoutes = require('./routes/pricingRoutes');
 const auditRoutes = require('./routes/auditRoutes');
+const dateSlotRoutes = require('./routes/dateSlotRoutes');
+
+// Controller imports
+const { uploadImage, deleteImage } = require('./controllers/uploadController');
+const { protect } = require('./middleware/auth');
+const upload = require('./middleware/upload');
 
 // Load environment variables
 dotenv.config();
@@ -30,6 +37,9 @@ app.use(compression()); // Compress responses
 app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
+// Serve uploaded files statically
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
 // Logging
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
@@ -42,6 +52,11 @@ app.use('/api/vendor', vendorRoutes);
 app.use('/api/drives', driveRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/admin/date-slots', dateSlotRoutes);
+
+// Upload routes
+app.post('/api/upload', protect, upload.single('image'), uploadImage);
+app.delete('/api/upload/:filename', protect, deleteImage);
 
 // Health check
 app.get('/api/health', (req, res) => {

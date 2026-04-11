@@ -4,15 +4,20 @@ const {
   createRequest,
   getRequests,
   getRequestById,
-  scheduleRequest,
+  updateRequestStatus,
   cancelRequest,
+  getAvailableSlots,
 } = require('../controllers/requestController');
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 
+// Public route - available slots
+router.get('/available-slots', getAvailableSlots);
+
+// Protected routes
 router.post('/', protect, createRequest);
 router.get('/', protect, getRequests);
 router.get('/:id', protect, getRequestById);
-router.post('/:id/schedule', protect, scheduleRequest);
+router.put('/:id/status', protect, adminOnly, updateRequestStatus);
 router.post('/:id/cancel', protect, cancelRequest);
 
 module.exports = router;

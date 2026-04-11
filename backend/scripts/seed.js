@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const User = require('../src/models/User');
 const PricingConfig = require('../src/models/PricingConfig');
+const DateSlot = require('../src/models/DateSlot');
 
 dotenv.config();
 
@@ -14,7 +15,8 @@ const seedData = async () => {
     // Clear existing data
     await User.deleteMany();
     await PricingConfig.deleteMany();
-    console.log('🗑️  Cleared existing data');
+    await DateSlot.deleteMany();
+    console.log('🗑️ Cleared existing data');
 
     // Create users
     const users = await User.create([
@@ -75,6 +77,28 @@ const seedData = async () => {
 
     await PricingConfig.create(pricingConfigs);
     console.log('✅ Created pricing configurations');
+
+    // Create default date slots for next 14 days
+    const dateSlots = [];
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    for (let i = 0; i < 14; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+
+      dateSlots.push({
+        date,
+        timeSlots: [
+          { slot: '09:00 AM - 12:00 PM', maxTickets: 10, bookedTickets: 0, isActive: true },
+          { slot: '02:00 PM - 05:00 PM', maxTickets: 10, bookedTickets: 0, isActive: true },
+        ],
+        isActive: true,
+      });
+    }
+
+    await DateSlot.create(dateSlots);
+    console.log('✅ Created date slots for next 14 days');
 
     console.log('\n✅ Database seeded successfully!');
     console.log('\n📱 Test Credentials:');
