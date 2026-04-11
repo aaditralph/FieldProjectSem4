@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ../backend
+    container_name: ewaste-backend
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    environment:
+      - MONGO_URI=mongodb://admin:ewaste_secure_password_2024@mongodb:27017/ewaste?authSource=admin
+    ports:
+      - "5000:5000"
+  mongodb:
+    build:
+      context: ./mongodb
+      dockerfile: Dockerfile
+    container_name: ewaste-mongodb
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: ewaste_secure_password_2024
+      MONGO_INITDB_DATABASE: ewaste
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongodb/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    command: ["--bind_ip_all", "--replSet", "rs0"]
+
+  # MongoDB Express - Web-based database management tool (optional)
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  ewaste-network:
+    driver: bridge
