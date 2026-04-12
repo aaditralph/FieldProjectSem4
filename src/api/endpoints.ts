@@ -56,9 +56,9 @@ export const adminApi = {
       completedRequests: number;
       pendingRequests: number;
       totalAmount: number;
-    }>('/admin/stats'),
+    }>('/audit/admin/stats'),
   getReports: (period: 'daily' | 'weekly' | 'monthly') =>
-    apiClient.get<Array<{ date: string; count: number; amount: number }>>('/admin/reports', {
+    apiClient.get<Array<{ date: string; count: number; amount: number }>>('/audit/admin/reports', {
       params: { period }
     }),
 };

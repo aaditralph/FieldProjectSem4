@@ -106,7 +106,7 @@ class ApiService {
     pendingRequests: number;
     totalAmount: number;
   }> {
-    const response = await this.client.get('/admin/stats');
+    const response = await this.client.get('/audit/admin/stats');
     return response.data;
   }
 }

@@ -24,7 +24,12 @@ export const useRequestStore = create<RequestState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.getRequests(params);
-      set({ requests: response, isLoading: false });
+      // Map _id to id for frontend compatibility
+      const mappedRequests = response.map((req: any) => ({
+        ...req,
+        id: req._id || req.id,
+      }));
+      set({ requests: mappedRequests, isLoading: false });
     } catch (error: any) {
       set({
         isLoading: false,
@@ -37,7 +42,12 @@ export const useRequestStore = create<RequestState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.getRequestById(id);
-      set({ currentRequest: response, isLoading: false });
+      // Map _id to id for frontend compatibility
+      const mappedRequest = {
+        ...response,
+        id: response._id || response.id,
+      };
+      set({ currentRequest: mappedRequest, isLoading: false });
     } catch (error: any) {
       set({
         isLoading: false,
@@ -51,12 +61,18 @@ export const useRequestStore = create<RequestState>((set, get) => ({
       set({ isLoading: true, error: null });
       const response = await api.updateRequestStatus(id, data);
       
+      // Map _id to id for frontend compatibility
+      const mappedResponse = {
+        ...response,
+        id: response._id || response.id,
+      };
+      
       // Update in requests list
       const requests = get().requests.map(req =>
-        req.id === id ? response : req
+        req.id === id ? mappedResponse : req
       );
 
-      set({ requests, currentRequest: response, isLoading: false });
+      set({ requests, currentRequest: mappedResponse, isLoading: false });
     } catch (error: any) {
       set({
         isLoading: false,

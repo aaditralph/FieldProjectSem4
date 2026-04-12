@@ -27,7 +27,12 @@ export const useDateSlotStore = create<DateSlotState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.getDateSlots(params);
-      set({ dateSlots: response, isLoading: false });
+      // Map _id to id for frontend compatibility
+      const mappedSlots = response.map((slot: any) => ({
+        ...slot,
+        id: slot._id || slot.id,
+      }));
+      set({ dateSlots: mappedSlots, isLoading: false });
     } catch (error: any) {
       set({
         isLoading: false,
@@ -40,8 +45,12 @@ export const useDateSlotStore = create<DateSlotState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.createDateSlot(data);
+      const mappedResponse = {
+        ...response,
+        id: response._id || response.id,
+      };
       set({ 
-        dateSlots: [...get().dateSlots, response],
+        dateSlots: [...get().dateSlots, mappedResponse],
         isLoading: false 
       });
     } catch (error: any) {
@@ -57,8 +66,12 @@ export const useDateSlotStore = create<DateSlotState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.updateDateSlot(id, data);
+      const mappedResponse = {
+        ...response,
+        id: response._id || response.id,
+      };
       const dateSlots = get().dateSlots.map(slot =>
-        slot.id === id ? response : slot
+        slot.id === id ? mappedResponse : slot
       );
       set({ dateSlots, isLoading: false });
     } catch (error: any) {
@@ -89,8 +102,13 @@ export const useDateSlotStore = create<DateSlotState>((set, get) => ({
     try {
       set({ isLoading: true, error: null });
       const response = await api.generateDefaultSlots(data);
+      // Map _id to id for each slot
+      const mappedSlots = response.slots.map((slot: any) => ({
+        ...slot,
+        id: slot._id || slot.id,
+      }));
       set({ 
-        dateSlots: [...get().dateSlots, ...response.slots],
+        dateSlots: [...get().dateSlots, ...mappedSlots],
         isLoading: false 
       });
     } catch (error: any) {

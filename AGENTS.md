@@ -34,19 +34,19 @@ npm run dev   # Web on http://localhost:3000
 
 **Two-package monorepo:**
 - `/backend` - Node.js/Express API + MongoDB
-- `/` (root) - Expo/React Native mobile app (not a workspace)
-- `/bmc-web` - React web dashboard for BMC (Vite + React + Zustand)
+- `/` (root) - Expo/React Native mobile app
+- `/bmc-web` - React web dashboard (Vite + React + Zustand)
 
 **No vendor bidding/payments** - Simple ticketing flow:
 1. Citizen creates ticket with date/time slot + address + image (mobile app)
-2. Admin views tickets, updates status (Created → Scheduled → In Progress → Completed) (mobile or web)
-3. Admin manages available date/time slots in "Date Slots" tab (mobile or web)
+2. Admin views tickets, updates status (Created → Scheduled → In Progress → Completed)
+3. Admin manages available date/time slots
 
 ## Critical Backend Notes
 
 - **Required env vars**: `MONGODB_URI`, `JWT_SECRET`, `DEFAULT_VENDOR_ID`
 - `DEFAULT_VENDOR_ID` only appears after first seed - must manually add to `.env`
-- Images stored locally in `/backend/uploads/` (not S3) - accessible at `http://localhost:5000/uploads/`
+- Images stored locally in `/backend/uploads/` - accessible at `http://localhost:5000/uploads/`
 - DateSlot model manages ticket capacity per time slot
 - CORS enabled for web dashboard on port 3000
 
@@ -55,54 +55,48 @@ npm run dev   # Web on http://localhost:3000
 **Entry:** `app/_layout.tsx` (Expo Router)
 **Auth flow:** `app/(auth)/login.tsx` → role-based tabs
 **Screens:**
-- Citizen: `app/(tabs)/citizen/` - index (list), create (form), request/[id] (detail)
-- Admin: `app/(tabs)/admin/` - index (dashboard), dateslots (slot management), request/[id] (status update)
+- Citizen: `app/(tabs)/citizen/` - tickets list, create, detail
+- Admin: `app/(tabs)/admin/` - dashboard, dateslots management, ticket status update
 
 ## BMC Web Dashboard Structure
 
 **Entry:** `bmc-web/src/main.tsx`
 **Auth flow:** `bmc-web/src/pages/Login.tsx` → protected routes
 **Pages:**
-- `/` - Dashboard (stats overview)
+- `/` - Dashboard (stats)
 - `/tickets` - Tickets list with filters
-- `/tickets/:id` - Ticket detail with status update
-- `/date-slots` - Date slot management (CRUD + auto-generate)
+- `/tickets/:id` - Ticket detail
+- `/date-slots` - Date slot CRUD
 
 ## Key Implementation Details
 
-- **State**: Zustand stores in `src/store/` - auth, request, date slots
-- **API**: Axios client in `src/api/`, endpoints in `endpoints.ts`
-- **Types**: `src/types/index.ts` (simplified from original pricing/category model)
-- **Image upload**: Uses `expo-image-picker` + FormData to `/api/upload`
+- **State**: Zustand stores in `src/store/`
+- **API**: Axios client in `src/api/`
+- **Types**: `src/types/index.ts`
+- **Image upload**: `expo-image-picker` + FormData to `/api/upload`
 
 ## Common Mistakes
 
 - Forgetting to add `DEFAULT_VENDOR_ID` after seed
-- Using `localhost` for Android emulator (use `10.0.2.2` instead)
-- Missing MongoDB running before backend start
-- Web dashboard CORS errors - backend must be running first
-- Not using same `DEFAULT_VENDOR_ID` in web dashboard env if deployed separately
+- Using `localhost` for Android emulator (use `10.0.2.2`)
+- Missing MongoDB before backend start
+- Web dashboard CORS errors - backend must run first
+- Different `DEFAULT_VENDOR_ID` in web dashboard if deployed separately
 
 ## API Endpoints
 
-- `POST /api/auth/login` - OTP-based auth
-- `GET /api/auth/me` - Get current user
-- `GET /api/requests/available-slots` - Public slot availability
-- `POST /api/requests` - Create ticket (checks slot capacity)
-- `GET /api/requests` - List tickets (filterable by status)
-- `GET /api/requests/:id` - Get ticket details
-- `PUT /api/requests/:id/status` - Admin update status
+- `POST /api/auth/login` - OTP auth
+- `GET /api/auth/me` - Current user
+- `GET /api/requests/available-slots` - Slot availability
+- `POST /api/requests` - Create ticket
+- `GET /api/requests` - List tickets
+- `GET /api/requests/:id` - Ticket details
+- `PUT /api/requests/:id/status` - Update status
 - `GET/POST/PUT /api/admin/date-slots` - Slot management
-- `POST /api/upload` - Image upload (multipart/form-data)
-- `GET /api/admin/stats` - Dashboard statistics
+- `POST /api/upload` - Image upload
+- `GET /api/admin/stats` - Dashboard stats
 
 ## File Locations
 
-- Backend controllers: `backend/src/controllers/`
-- Backend models: `backend/src/models/`
-- Backend routes: `backend/src/routes/`
-- Mobile stores: `src/store/`
-- Mobile screens: `app/(tabs)/{role}/`
-- Web dashboard pages: `bmc-web/src/pages/`
-- Web stores: `bmc-web/src/store/`
-- Web services: `bmc-web/src/services/`
+- Backend: `backend/src/controllers/`, `backend/src/models/`, `backend/src/routes/`
+- Mobile: `src/store/`, `app/(tabs)/{role}
