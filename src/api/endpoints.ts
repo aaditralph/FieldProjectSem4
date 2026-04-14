@@ -11,6 +11,8 @@ import {
   GenerateSlotsPayload,
   TicketCount,
   User,
+  Drive,
+  PricingConfig,
 } from '../types';
 import apiClient from './client';
 
@@ -40,6 +42,22 @@ export const requestApi = {
     apiClient.get<AvailableSlot[]>('/requests/available-slots'),
 };
 
+// Drive endpoints
+export const driveApi = {
+  getAll: () => 
+    apiClient.get<Drive[]>('/drives'),
+  join: (id: string) => 
+    apiClient.post<Drive>(`/drives/${id}/join`),
+};
+
+// Pricing endpoints - Added to match pricingController.js
+export const pricingApi = {
+  getAll: () => 
+    apiClient.get<PricingConfig[]>('/pricing'),
+  update: (data: any) => 
+    apiClient.put<PricingConfig>('/pricing', data),
+};
+
 // Audit endpoints
 export const auditApi = {
   getByRequestId: (requestId: string) =>
@@ -63,7 +81,7 @@ export const adminApi = {
     }),
 };
 
-// Date Slot endpoints (Admin only)
+// Date Slot endpoints
 export const dateSlotApi = {
   getAll: (params?: { startDate?: string; endDate?: string }) =>
     apiClient.get<DateSlot[]>('/admin/date-slots', { params }),

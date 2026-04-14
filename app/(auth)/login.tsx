@@ -11,7 +11,9 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LoginScreen() {
   const [phone, setPhone] = useState('');
@@ -30,10 +32,11 @@ export default function LoginScreen() {
 
     try {
       clearError();
-      const otpCode = await sendOtp(phone);
+      const response = await sendOtp(phone); 
+      const otpCode = response?.otp || '';
+      
       setStoredOtp(otpCode);
       setStep('otp');
-      Alert.alert(otpCode);
       
       if (otpCode) {
         Alert.alert(
@@ -43,7 +46,8 @@ export default function LoginScreen() {
         );
       }
     } catch (err: any) {
-      Alert.alert('Error', err || 'Failed to send OTP');
+      const message = err?.message || 'Failed to send OTP';
+      Alert.alert('Error', message);
     }
   };
 
@@ -55,14 +59,8 @@ export default function LoginScreen() {
 
     try {
       clearError();
-      console.log('Attempting login with phone:', phone, 'OTP:', storedOtp || otp);
-      
-      // Use stored OTP from mock API or user input
       await login(phone, storedOtp || otp);
       
-      console.log('Login successful!');
-      
-      // Explicitly navigate based on user role
       const currentUser = useAuthStore.getState().user;
       if (currentUser?.role === 'CITIZEN') {
         router.replace('/(tabs)/citizen');
@@ -72,113 +70,126 @@ export default function LoginScreen() {
         router.replace('/(tabs)/admin');
       }
     } catch (err: any) {
-      console.error('Login error:', err);
-      const errorMessage = error || err.message || 'Invalid OTP. Please try again.';
+      const errorMessage = err?.message || 'Invalid OTP. Please try again.';
       Alert.alert('Login Failed', errorMessage);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        <Text style={styles.title}>BMC E-Waste</Text>
-        <Text style={styles.subtitle}>Recycle Responsibly</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.content}>
+            <Text style={styles.title}>BMC E-Waste</Text>
+            <Text style={styles.subtitle}>Recycle Responsibly</Text>
 
-        <View style={styles.form}>
-          {step === 'phone' ? (
-            <>
-              <Text style={styles.label}>Phone Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter 10-digit phone number"
-                keyboardType="phone-pad"
-                maxLength={10}
-                value={phone}
-                onChangeText={setPhone}
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={[styles.button, isLoading && styles.buttonDisabled]}
-                onPress={handleSendOtp}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Send OTP</Text>
-                )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <Text style={styles.label}>Enter OTP</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter 4-digit OTP"
-                keyboardType="number-pad"
-                maxLength={4}
-                value={otp}
-                onChangeText={setOtp}
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={[styles.button, isLoading && styles.buttonDisabled]}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Verify & Login</Text>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => {
-                  setStep('phone');
-                  setOtp('');
-                  setStoredOtp('');
-                }}
-              >
-                <Text style={styles.backButtonText}>Change Phone Number</Text>
-              </TouchableOpacity>
-            </>
-          )}
+            <View style={styles.form}>
+              {step === 'phone' ? (
+                <>
+                  <Text style={styles.label}>Phone Number</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter 10-digit phone number"
+                    keyboardType="phone-pad"
+                    maxLength={10}
+                    value={phone}
+                    onChangeText={setPhone}
+                    editable={!isLoading}
+                  />
+                  <TouchableOpacity
+                    style={[styles.button, isLoading && styles.buttonDisabled]}
+                    onPress={handleSendOtp}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.buttonText}>Send OTP</Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.label}>Enter OTP</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Enter 4-digit OTP"
+                    keyboardType="number-pad"
+                    maxLength={4}
+                    value={otp}
+                    onChangeText={setOtp}
+                    editable={!isLoading}
+                  />
+                  <TouchableOpacity
+                    style={[styles.button, isLoading && styles.buttonDisabled]}
+                    onPress={handleLogin}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <Text style={styles.buttonText}>Verify & Login</Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.backButton}
+                    onPress={() => {
+                      setStep('phone');
+                      setOtp('');
+                      setStoredOtp('');
+                    }}
+                  >
+                    <Text style={styles.backButtonText}>Change Phone Number</Text>
+                  </TouchableOpacity>
+                </>
+              )}
 
-          {error && <Text style={styles.errorText}>{error}</Text>}
-        </View>
+              {error && <Text style={styles.errorText}>{error}</Text>}
+            </View>
 
-        <View style={styles.demoInfo}>
-          <Text style={styles.demoTitle}>📝 How it works:</Text>
-          <Text style={styles.demoText}>• Enter any 10-digit phone number</Text>
-          <Text style={styles.demoText}>• Auto-registration on first login</Text>
-          <Text style={styles.demoText}>• Use OTP: 1234 for testing</Text>
-          <Text style={styles.demoText}>• Default role: Citizen</Text>
-        </View>
+            <View style={styles.demoInfo}>
+              <Text style={styles.demoTitle}>📝 How it works:</Text>
+              <Text style={styles.demoText}>• Enter any 10-digit phone number</Text>
+              <Text style={styles.demoText}>• Auto-registration on first login</Text>
+              <Text style={styles.demoText}>• Use OTP: 1234 for testing</Text>
+              <Text style={styles.demoText}>• Default role: Citizen</Text>
+            </View>
 
-        <View style={[styles.demoInfo, styles.demoInfoSmall]}>
-          <Text style={styles.demoTitle}>👥 Demo Accounts:</Text>
-          <Text style={styles.demoText}>Citizen: 9876543210</Text>
-          <Text style={styles.demoText}>Vendor: 9876543211</Text>
-          <Text style={styles.demoText}>Admin: 9876543212</Text>
-        </View>
-      </View>
-    </KeyboardAvoidingView>
+            <View style={[styles.demoInfo, styles.demoInfoSmall]}>
+              <Text style={styles.demoTitle}>👥 Demo Accounts:</Text>
+              <Text style={styles.demoText}>Citizen: 9876543210</Text>
+              <Text style={styles.demoText}>Vendor: 9876543211</Text>
+              <Text style={styles.demoText}>Admin: 9876543212</Text>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#f5f5f5',
+  },
+  container: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
+    paddingBottom: 40, // Extra padding to avoid clipping
   },
   title: {
     fontSize: 36,

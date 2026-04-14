@@ -22,6 +22,7 @@ interface TimeSlotInput {
 
 interface DateSlot {
   id: string;
+  _id?: string;
   date: string;
   timeSlots: {
     slot: string;
@@ -55,7 +56,7 @@ export default function DateSlotsScreen() {
     try {
       setIsLoading(true);
       const response = await dateSlotApi.getAll();
-      setDateSlots(response.data);
+      setDateSlots(response.data || []);
     } catch (error) {
       console.error('Failed to load date slots:', error);
       Alert.alert('Error', 'Failed to load date slots');
@@ -214,7 +215,6 @@ export default function DateSlotsScreen() {
         <Text style={styles.subtitle}>Manage pickup time slots</Text>
       </View>
 
-      {/* Actions */}
       <View style={styles.actions}>
         <TouchableOpacity style={styles.actionButton} onPress={handleGenerateDefault}>
           <Text style={styles.actionButtonText}>Auto Generate 30 Days</Text>
@@ -224,7 +224,6 @@ export default function DateSlotsScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Date Slots List */}
       <ScrollView
         style={styles.list}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
@@ -235,20 +234,21 @@ export default function DateSlotsScreen() {
             <Text style={styles.emptySubtext}>Generate slots or add manually</Text>
           </View>
         ) : (
-          dateSlots.map((slot) => (
-            <View key={slot.id} style={styles.card}>
+          dateSlots.map((slot, index) => (
+            // FIX: Robust key logic for MongoDB
+            <View key={slot.id || slot._id || index} style={styles.card}>
               <View style={styles.cardHeader}>
                 <Text style={styles.cardDate}>{formatDate(slot.date)}</Text>
                 <View style={styles.cardActions}>
                   <TouchableOpacity
                     style={[styles.toggleButton, slot.isActive ? styles.toggleActive : styles.toggleInactive]}
-                    onPress={() => handleToggleActive(slot.id, slot.isActive)}
+                    onPress={() => handleToggleActive(slot.id || slot._id || '', slot.isActive)}
                   >
                     <Text style={styles.toggleText}>{slot.isActive ? 'Active' : 'Inactive'}</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={styles.deleteButton}
-                    onPress={() => handleDeleteSlot(slot.id)}
+                    onPress={() => handleDeleteSlot(slot.id || slot._id || '')}
                   >
                     <Text style={styles.deleteButtonText}>Delete</Text>
                   </TouchableOpacity>
@@ -267,7 +267,8 @@ export default function DateSlotsScreen() {
                   </Text>
                 </View>
                 {slot.timeSlots.map((ts, idx) => (
-                  <View key={idx} style={styles.timeSlotRow}>
+                  // FIX: Composite key for inner loop
+                  <View key={`${slot.id || slot._id || index}-ts-${idx}`} style={styles.timeSlotRow}>
                     <Text style={styles.timeSlotText}>{ts.slot}</Text>
                     <Text style={styles.timeSlotStats}>
                       {ts.bookedTickets}/{ts.maxTickets}
@@ -281,7 +282,6 @@ export default function DateSlotsScreen() {
         )}
       </ScrollView>
 
-      {/* Add Modal */}
       <Modal
         visible={showAddModal}
         animationType="slide"
@@ -302,7 +302,7 @@ export default function DateSlotsScreen() {
 
             <Text style={styles.modalLabel}>Time Slots</Text>
             {timeSlots.map((ts, index) => (
-              <View key={index} style={styles.timeSlotInput}>
+              <View key={`input-${index}`} style={styles.timeSlotInput}>
                 <TextInput
                   style={[styles.modalInput, styles.timeSlotInputField]}
                   placeholder="e.g., 09:00 AM - 12:00 PM"
@@ -350,275 +350,57 @@ export default function DateSlotsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  header: {
-    backgroundColor: '#8e44ad',
-    padding: 20,
-    paddingTop: 60,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
-    marginTop: 4,
-  },
-  actions: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
-  },
-  actionButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#8e44ad',
-    alignItems: 'center',
-  },
-  actionButtonPrimary: {
-    backgroundColor: '#8e44ad',
-    borderWidth: 0,
-  },
-  actionButtonText: {
-    fontSize: 14,
-    color: '#8e44ad',
-    fontWeight: '600',
-  },
-  actionButtonTextPrimary: {
-    color: '#fff',
-  },
-  list: {
-    flex: 1,
-    padding: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  cardDate: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
-  },
-  cardActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  toggleButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  toggleActive: {
-    backgroundColor: '#27ae60',
-  },
-  toggleInactive: {
-    backgroundColor: '#95a5a6',
-  },
-  toggleText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  deleteButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#e74c3c',
-  },
-  deleteButtonText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardBody: {
-    gap: 8,
-  },
-  statsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  statsText: {
-    fontSize: 14,
-    color: '#7f8c8d',
-  },
-  availabilityText: {
-    fontSize: 14,
-    color: '#27ae60',
-    fontWeight: '600',
-  },
-  fullText: {
-    color: '#e74c3c',
-  },
-  timeSlotRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  timeSlotText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#2c3e50',
-  },
-  timeSlotStats: {
-    fontSize: 14,
-    color: '#7f8c8d',
-    marginRight: 12,
-  },
-  statusIndicator: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-  },
-  statusActive: {
-    backgroundColor: '#27ae60',
-  },
-  statusInactive: {
-    backgroundColor: '#e74c3c',
-  },
-  empty: {
-    alignItems: 'center',
-    marginTop: 60,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#7f8c8d',
-    marginTop: 8,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 20,
-  },
-  modalContent: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 20,
-    width: '100%',
-    maxHeight: '80%',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 20,
-  },
-  modalLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 8,
-    marginTop: 16,
-  },
-  modalInput: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-  },
-  timeSlotInput: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 8,
-  },
-  timeSlotInputField: {
-    flex: 1,
-  },
-  maxTicketsInput: {
-    width: 60,
-  },
-  removeButton: {
-    width: 40,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#e74c3c',
-    borderRadius: 8,
-  },
-  removeButtonText: {
-    color: '#fff',
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  addSlotButton: {
-    padding: 12,
-    borderWidth: 1,
-    borderColor: '#8e44ad',
-    borderStyle: 'dashed',
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  addSlotButtonText: {
-    color: '#8e44ad',
-    fontWeight: '600',
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    marginTop: 20,
-  },
-  modalButton: {
-    flex: 1,
-    padding: 14,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  modalButtonSecondary: {
-    backgroundColor: '#f8f9fa',
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-  },
-  modalButtonPrimary: {
-    backgroundColor: '#8e44ad',
-  },
-  modalButtonText: {
-    fontSize: 16,
-    color: '#2c3e50',
-    fontWeight: '600',
-  },
-  modalButtonTextPrimary: {
-    color: '#fff',
-  },
+  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  header: { backgroundColor: '#8e44ad', padding: 20, paddingTop: 60 },
+  title: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
+  subtitle: { fontSize: 14, color: 'rgba(255,255,255,0.8)', marginTop: 4 },
+  actions: { flexDirection: 'row', padding: 16, gap: 12 },
+  actionButton: { flex: 1, padding: 14, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#8e44ad', alignItems: 'center' },
+  actionButtonPrimary: { backgroundColor: '#8e44ad', borderWidth: 0 },
+  actionButtonText: { fontSize: 14, color: '#8e44ad', fontWeight: '600' },
+  actionButtonTextPrimary: { color: '#fff' },
+  list: { flex: 1, padding: 16 },
+  card: { backgroundColor: '#fff', borderRadius: 12, marginBottom: 16, padding: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  cardDate: { fontSize: 18, fontWeight: '600', color: '#2c3e50' },
+  cardActions: { flexDirection: 'row', gap: 8 },
+  toggleButton: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16 },
+  toggleActive: { backgroundColor: '#27ae60' },
+  toggleInactive: { backgroundColor: '#95a5a6' },
+  toggleText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  deleteButton: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#e74c3c' },
+  deleteButtonText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  cardBody: { gap: 8 },
+  statsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
+  statsText: { fontSize: 14, color: '#7f8c8d' },
+  availabilityText: { fontSize: 14, color: '#27ae60', fontWeight: '600' },
+  fullText: { color: '#e74c3c' },
+  timeSlotRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  timeSlotText: { flex: 1, fontSize: 14, color: '#2c3e50' },
+  timeSlotStats: { fontSize: 14, color: '#7f8c8d', marginRight: 12 },
+  statusIndicator: { width: 12, height: 12, borderRadius: 6 },
+  statusActive: { backgroundColor: '#27ae60' },
+  statusInactive: { backgroundColor: '#e74c3c' },
+  empty: { alignItems: 'center', marginTop: 60 },
+  emptyText: { fontSize: 18, fontWeight: '600', color: '#2c3e50' },
+  emptySubtext: { fontSize: 14, color: '#7f8c8d', marginTop: 8 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#fff', borderRadius: 12, padding: 20, width: '100%', maxHeight: '80%' },
+  modalTitle: { fontSize: 20, fontWeight: '600', color: '#2c3e50', marginBottom: 20 },
+  modalLabel: { fontSize: 14, fontWeight: '600', color: '#2c3e50', marginBottom: 8, marginTop: 16 },
+  modalInput: { backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#dee2e6', borderRadius: 8, padding: 12, fontSize: 16 },
+  timeSlotInput: { flexDirection: 'row', gap: 8, marginBottom: 8 },
+  timeSlotInputField: { flex: 1 },
+  maxTicketsInput: { width: 60 },
+  removeButton: { width: 40, height: 48, justifyContent: 'center', alignItems: 'center', backgroundColor: '#e74c3c', borderRadius: 8 },
+  removeButtonText: { color: '#fff', fontSize: 24, fontWeight: 'bold' },
+  addSlotButton: { padding: 12, borderWidth: 1, borderColor: '#8e44ad', borderStyle: 'dashed', borderRadius: 8, alignItems: 'center', marginTop: 8 },
+  addSlotButtonText: { color: '#8e44ad', fontWeight: '600' },
+  modalActions: { flexDirection: 'row', gap: 12, marginTop: 20 },
+  modalButton: { flex: 1, padding: 14, borderRadius: 8, alignItems: 'center' },
+  modalButtonSecondary: { backgroundColor: '#f8f9fa', borderWidth: 1, borderColor: '#dee2e6' },
+  modalButtonPrimary: { backgroundColor: '#8e44ad' },
+  modalButtonText: { fontSize: 16, color: '#2c3e50', fontWeight: '600' },
+  modalButtonTextPrimary: { color: '#fff' },
 });

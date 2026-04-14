@@ -87,5 +87,4 @@ app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 API URL: http://localhost:${PORT}/api`);
 });
-
 module.exports = app;

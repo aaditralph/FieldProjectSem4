@@ -11,7 +11,6 @@ const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add auth token
 apiClient.interceptors.request.use(
   async (config) => {
     const token = await SecureStore.getItemAsync('auth_token');
@@ -20,19 +19,14 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
-// Response interceptor for error handling
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      // Token expired or invalid
       await SecureStore.deleteItemAsync('auth_token');
-      // Navigate to login will be handled by auth store
     }
     return Promise.reject(error);
   }

@@ -1,8 +1,9 @@
+import { requestApi } from '@/src/api/endpoints';
 import { useAuthStore } from '@/src/store/authStore';
-import { useRequestStore } from '@/src/store/requestStore';
 import { Request, RequestStatus } from '@/src/types';
+import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,28 +12,40 @@ import {
   Text,
   TouchableOpacity,
   View,
-  Image,
 } from 'react-native';
 
 export default function CitizenHomeScreen() {
-  const { user } = useAuthStore();
-  const { requests, fetchRequests, isLoading } = useRequestStore();
+  const [requests, setRequests] = useState<Request[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  
+  const { user } = useAuthStore();
   const router = useRouter();
+
+  const loadRequests = async () => {
+    try {
+      setIsLoading(true);
+      const response = await requestApi.getAll();
+      
+      // FIX: Normalize MongoDB _id to id to prevent 'undefined' crashes
+      const normalizedData = response.data.map((req: any) => ({
+        ...req,
+        id: req.id || req._id,
+      }));
+      
+      setRequests(normalizedData);
+    } catch (error) {
+      console.error('Failed to load requests:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
       loadRequests();
     }, [])
   );
-
-  const loadRequests = async () => {
-    try {
-      await fetchRequests();
-    } catch (error) {
-      console.error('Failed to load requests:', error);
-    }
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
@@ -42,91 +55,39 @@ export default function CitizenHomeScreen() {
 
   const getStatusColor = (status: RequestStatus) => {
     switch (status) {
-      case RequestStatus.CREATED:
-        return '#f39c12';
-      case RequestStatus.SCHEDULED:
-        return '#3498db';
-      case RequestStatus.IN_PROGRESS:
-        return '#9b59b6';
-      case RequestStatus.COMPLETED:
-        return '#27ae60';
-      case RequestStatus.CANCELLED:
-        return '#e74c3c';
-      default:
-        return '#95a5a6';
+      case RequestStatus.CREATED: return '#f39c12';
+      case RequestStatus.SCHEDULED: return '#3498db';
+      case RequestStatus.IN_PROGRESS: return '#9b59b6';
+      case RequestStatus.COMPLETED: return '#27ae60';
+      case RequestStatus.CANCELLED: return '#e74c3c';
+      default: return '#95a5a6';
     }
-  };
-
-  const getStatusLabel = (status: RequestStatus) => {
-    switch (status) {
-      case RequestStatus.CREATED:
-        return 'Pending';
-      case RequestStatus.SCHEDULED:
-        return 'Scheduled';
-      case RequestStatus.IN_PROGRESS:
-        return 'In Progress';
-      case RequestStatus.COMPLETED:
-        return 'Completed';
-      case RequestStatus.CANCELLED:
-        return 'Cancelled';
-      default:
-        return status;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Not set';
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
   };
 
   const renderRequest = ({ item }: { item: Request }) => (
-    <TouchableOpacity
+    <TouchableOpacity 
       style={styles.card}
-      onPress={() => router.push(`/citizen/request/${item.id}` as any)}
+      onPress={() => router.push(`/(tabs)/citizen/request/${item.id}`)}
     >
       <View style={styles.cardHeader}>
-        <View style={styles.headerLeft}>
-          <Text style={styles.dateLabel}>Preferred Date</Text>
-          <Text style={styles.dateText}>{formatDate(item.preferredDate)}</Text>
-        </View>
+        <Text style={styles.category}>{item.category || 'Electronic Item'}</Text>
         <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{getStatusLabel(item.status)}</Text>
+          <Text style={styles.statusText}>{item.status}</Text>
         </View>
       </View>
-
-      <View style={styles.cardBody}>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Time:</Text>
-          <Text style={styles.infoValue}>{item.preferredTimeSlot}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Address:</Text>
-          <Text style={styles.infoValue} numberOfLines={2}>{item.address}</Text>
-        </View>
-        <View style={styles.infoRow}>
-          <Text style={styles.infoLabel}>Contact:</Text>
-          <Text style={styles.infoValue}>{item.contactPhone}</Text>
-        </View>
-      </View>
-
-      {item.imageUrl && (
-        <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
-      )}
-
+      
+      <Text style={styles.address} numberOfLines={1}>📍 {item.address}</Text>
+      
       <View style={styles.cardFooter}>
-        <Text style={styles.createdAt}>
-          Submitted on {formatDate(item.createdAt)}
+        <Text style={styles.date}>
+          Created: {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-IN') : 'N/A'}
         </Text>
+        <Ionicons name="chevron-forward" size={16} color="#bdc3c7" />
       </View>
     </TouchableOpacity>
   );
 
-  if (isLoading && requests.length === 0) {
+  if (isLoading && !refreshing) {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#27ae60" />
@@ -137,34 +98,35 @@ export default function CitizenHomeScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>Hello, {user?.name || 'Resident'}!</Text>
-        <Text style={styles.subtext}>Your e-waste pickup requests</Text>
+        <View>
+          <Text style={styles.welcome}>Hello, {user?.name?.split(' ')[0] || 'Citizen'}</Text>
+          <Text style={styles.subtitle}>Your E-Waste Requests</Text>
+        </View>
+        <TouchableOpacity 
+          style={styles.addButton}
+          onPress={() => router.push('/(tabs)/citizen/create')}
+        >
+          <Ionicons name="add" size={24} color="#fff" />
+        </TouchableOpacity>
       </View>
 
       <FlatList
         data={requests}
         renderItem={renderRequest}
-        keyExtractor={(item) => item.id}
+        // FIX: Safe key extraction with fallback to index
+        keyExtractor={(item, index) => (item.id || (item as any)._id || index).toString()} 
         contentContainerStyle={styles.list}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#27ae60" />
         }
         ListEmptyComponent={
           <View style={styles.empty}>
+            <Ionicons name="document-text-outline" size={64} color="#bdc3c7" />
             <Text style={styles.emptyText}>No requests yet</Text>
-            <Text style={styles.emptySubtext}>
-              Tap the + button below to create your first e-waste pickup request
-            </Text>
+            <Text style={styles.emptySubtext}>Tap the + button to schedule your first pickup</Text>
           </View>
         }
       />
-
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => router.push('/citizen/create' as any)}
-      >
-        <Text style={styles.fabText}>+</Text>
-      </TouchableOpacity>
     </View>
   );
 }
@@ -172,7 +134,7 @@ export default function CitizenHomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#f8f9fa',
   },
   center: {
     flex: 1,
@@ -180,20 +142,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    backgroundColor: '#fff',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: 20,
+    paddingTop: 60,
+    backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#dee2e6',
+    borderBottomColor: '#eee',
   },
-  greeting: {
+  welcome: {
     fontSize: 24,
     fontWeight: 'bold',
     color: '#2c3e50',
   },
-  subtext: {
+  subtitle: {
     fontSize: 14,
     color: '#7f8c8d',
-    marginTop: 4,
+  },
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#27ae60',
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
   },
   list: {
     padding: 16,
@@ -202,113 +180,68 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 12,
+    elevation: 2,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-    overflow: 'hidden',
+    shadowRadius: 2,
   },
   cardHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    alignItems: 'center',
+    marginBottom: 10,
   },
-  headerLeft: {},
-  dateLabel: {
-    fontSize: 12,
-    color: '#7f8c8d',
-    marginBottom: 4,
-  },
-  dateText: {
+  category: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#2c3e50',
   },
   statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   statusText: {
     color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
-  cardBody: {
-    padding: 16,
-    gap: 8,
-  },
-  infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  infoLabel: {
-    width: 70,
+  address: {
     fontSize: 14,
     color: '#7f8c8d',
-  },
-  infoValue: {
-    flex: 1,
-    fontSize: 14,
-    color: '#2c3e50',
-    fontWeight: '500',
-  },
-  cardImage: {
-    width: '100%',
-    height: 150,
-    resizeMode: 'cover',
+    marginBottom: 12,
   },
   cardFooter: {
-    padding: 12,
-    backgroundColor: '#f8f9fa',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
+    paddingTop: 10,
   },
-  createdAt: {
+  date: {
     fontSize: 12,
-    color: '#95a5a6',
+    color: '#bdc3c7',
   },
   empty: {
     alignItems: 'center',
-    marginTop: 60,
-    padding: 20,
+    justifyContent: 'center',
+    marginTop: 80,
+    padding: 40,
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#2c3e50',
+    marginTop: 16,
   },
   emptySubtext: {
     fontSize: 14,
     color: '#7f8c8d',
-    marginTop: 8,
     textAlign: 'center',
-  },
-  fab: {
-    position: 'absolute',
-    right: 20,
-    bottom: 20,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#27ae60',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  fabText: {
-    fontSize: 32,
-    color: '#fff',
-    fontWeight: '300',
-    marginTop: -4,
+    marginTop: 8,
   },
 });
