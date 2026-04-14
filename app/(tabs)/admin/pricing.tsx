@@ -1,35 +1,20 @@
-import { pricingApi } from '@/src/api/endpoints';
+import { useAdminStore } from '@/src/store/adminStore';
 import { Condition, PricingConfig } from '@/src/types';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
     ActivityIndicator,
-    Alert,
     FlatList,
     StyleSheet,
     Text,
-    View,
+    View
 } from 'react-native';
 
 export default function PricingScreen() {
-  const [pricing, setPricing] = useState<PricingConfig[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { pricingConfigs: pricing, isLoading, fetchPricing } = useAdminStore();
 
   useEffect(() => {
-    loadPricing();
+    fetchPricing();
   }, []);
-
-  const loadPricing = async () => {
-    try {
-      setIsLoading(true);
-      const response = await pricingApi.getAll();
-      setPricing(response.data);
-    } catch (error) {
-      console.error('Failed to load pricing:', error);
-      Alert.alert('Error', 'Failed to load pricing configuration');
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const renderPricing = ({ item }: { item: PricingConfig }) => (
     <View style={styles.card}>

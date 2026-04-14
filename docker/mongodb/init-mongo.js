@@ -57,7 +57,7 @@ db.createCollection('requests', {
       required: ['userId', 'category', 'quantity', 'address', 'status'],
       properties: {
         userId: {
-          bsonType: 'string',
+          bsonType: 'objectId',
           description: 'Reference to user - required'
         },
         category: {
@@ -65,7 +65,7 @@ db.createCollection('requests', {
           description: 'E-waste category - required'
         },
         quantity: {
-          bsonType: 'int',
+          bsonType: ['int', 'double', 'number'],
           minimum: 1,
           description: 'Number of items - required'
         },
@@ -82,7 +82,7 @@ db.createCollection('requests', {
           description: 'Scheduled pickup time'
         },
         assignedVendorId: {
-          bsonType: 'string',
+          bsonType: 'objectId',
           description: 'Assigned vendor reference'
         }
       }

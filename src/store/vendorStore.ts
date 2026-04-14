@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { vendorApi } from '../api/endpoints';
+import { mockApi } from '../api/mock';
 import { CompletePickupPayload, Pickup, Request, Transaction } from '../types';
 
 interface VendorState {
@@ -16,6 +17,8 @@ interface VendorState {
   clearCompletionResult: () => void;
 }
 
+const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
+
 export const useVendorStore = create<VendorState>((set, get) => ({
   pickups: [],
   currentPickup: null,
@@ -26,7 +29,14 @@ export const useVendorStore = create<VendorState>((set, get) => ({
   fetchPickups: async () => {
     try {
       set({ isLoading: true, error: null });
-      const response = await vendorApi.getPickups();
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.getPickups() };
+      } else {
+        response = await vendorApi.getPickups();
+      }
+      
       set({ pickups: response.data as any, isLoading: false });
     } catch (error: any) {
       set({
@@ -39,7 +49,14 @@ export const useVendorStore = create<VendorState>((set, get) => ({
   fetchPickupById: async (id: string) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await vendorApi.getPickupById(id);
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.getPickupById(id) };
+      } else {
+        response = await vendorApi.getPickupById(id);
+      }
+      
       set({ currentPickup: response.data as any, isLoading: false });
     } catch (error: any) {
       set({
@@ -52,7 +69,13 @@ export const useVendorStore = create<VendorState>((set, get) => ({
   completePickup: async (id: string, data: CompletePickupPayload) => {
     try {
       set({ isLoading: true, error: null });
-      const response = await vendorApi.completePickup(id, data);
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.completePickup(id, data) };
+      } else {
+        response = await vendorApi.completePickup(id, data);
+      }
       
       set({
         completionResult: response.data as any,

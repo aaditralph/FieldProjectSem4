@@ -210,6 +210,12 @@ export const mockApi = {
     await delay(300);
     return mockPickups;
   },
+  getPickupById: async (id: string) => {
+    await delay(200);
+    const pickup = mockPickups.find(p => p.id === id);
+    if (!pickup) throw new Error('Pickup not found');
+    return pickup;
+  },
   completePickup: async (id: string, data: any) => {
     await delay(500);
     const pickup = mockPickups.find(p => p.id === id);

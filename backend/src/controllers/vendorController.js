@@ -24,6 +24,89 @@ const getPickups = async (req, res) => {
   }
 };
 
+// @desc    Accept a pickup (vendor acknowledges assignment)
+// @route   POST /vendor/pickups/:id/accept
+// @access  Private (Vendor)
+const acceptPickup = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: 'Pickup not found' });
+    }
+
+    // Verify this pickup is assigned to this vendor
+    if (request.assignedVendorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Update status
+    request.status = 'IN_PROGRESS';
+    await request.save();
+
+    // Log action
+    await AuditLog.create({
+      action: 'pickup_accepted',
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      requestId: request._id,
+      meta: { 
+        vendorId: req.user.id,
+        vendorName: req.user.name,
+      },
+    });
+
+    const updatedRequest = await Request.findById(request._id)
+      .populate('userId', 'name phone address')
+      .populate('assignedVendorId', 'name phone');
+
+    res.json(updatedRequest);
+  } catch (error) {
+    console.error('Accept pickup error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Start pickup (vendor is on the way or at location)
+// @route   POST /vendor/pickups/:id/start
+// @access  Private (Vendor)
+const startPickup = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+
+    if (!request) {
+      return res.status(404).json({ message: 'Pickup not found' });
+    }
+
+    // Verify this pickup is assigned to this vendor
+    if (request.assignedVendorId.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Status already IN_PROGRESS, just log the action
+    await AuditLog.create({
+      action: 'pickup_started',
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      requestId: request._id,
+      meta: { 
+        vendorId: req.user.id,
+        vendorName: req.user.name,
+        scheduledTime: request.scheduledTime,
+      },
+    });
+
+    const updatedRequest = await Request.findById(request._id)
+      .populate('userId', 'name phone address')
+      .populate('assignedVendorId', 'name phone');
+
+    res.json(updatedRequest);
+  } catch (error) {
+    console.error('Start pickup error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 // @desc    Get pickup by ID
 // @route   GET /vendor/pickups/:id
 // @access  Private (Vendor)
@@ -130,5 +213,7 @@ const completePickup = async (req, res) => {
 module.exports = {
   getPickups,
   getPickupById,
+  acceptPickup,
+  startPickup,
   completePickup,
 };

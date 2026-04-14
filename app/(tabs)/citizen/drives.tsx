@@ -1,6 +1,6 @@
-import { driveApi } from '@/src/api/endpoints';
+import { useRequestStore } from '@/src/store/requestStore';
 import { Drive } from '@/src/types';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import {
     ActivityIndicator,
     FlatList,
@@ -11,24 +11,11 @@ import {
 } from 'react-native';
 
 export default function DrivesScreen() {
-  const [drives, setDrives] = useState<Drive[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { drives, isLoading, fetchDrives } = useRequestStore();
 
   useEffect(() => {
-    loadDrives();
+    fetchDrives();
   }, []);
-
-  const loadDrives = async () => {
-    try {
-      setIsLoading(true);
-      const response = await driveApi.getAll();
-      setDrives(response.data);
-    } catch (error) {
-      console.error('Failed to load drives:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);

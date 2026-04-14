@@ -13,6 +13,7 @@ const vendorRoutes = require('./routes/vendorRoutes');
 const driveRoutes = require('./routes/driveRoutes');
 const pricingRoutes = require('./routes/pricingRoutes');
 const auditRoutes = require('./routes/auditRoutes');
+const adminRoutes = require('./routes/adminRoutes');
 
 // Load environment variables
 dotenv.config();
@@ -42,6 +43,7 @@ app.use('/api/vendor', vendorRoutes);
 app.use('/api/drives', driveRoutes);
 app.use('/api/pricing', pricingRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -68,9 +70,11 @@ app.use((req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
-  console.log(`📡 API URL: http://localhost:${PORT}/api`);
+  console.log(`📡 Local: http://localhost:${PORT}/api`);
+  console.log(`🌐 Network: http://192.168.1.45:${PORT}/api`);
+  console.log(`📱 Use the Network URL in your React Native app .env file`);
 });
 
 module.exports = app;

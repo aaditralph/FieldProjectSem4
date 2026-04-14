@@ -1,4 +1,4 @@
-import { vendorApi } from '@/src/api/endpoints';
+import { useVendorStore } from '@/src/store/vendorStore';
 import { Condition, Pickup, Request } from '@/src/types';
 import React, { useEffect, useState } from 'react';
 import {
@@ -16,28 +16,52 @@ import {
 type PickupWithRequest = Pickup & { request: Request };
 
 export default function VendorHomeScreen() {
-  const [pickups, setPickups] = useState<PickupWithRequest[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedPickup, setSelectedPickup] = useState<PickupWithRequest | null>(null);
+  const { pickups: storePickups, isLoading, fetchPickups, completePickup } = useVendorStore();
+  const [selectedPickup, setSelectedPickup] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [otp, setOtp] = useState('');
   const [weight, setWeight] = useState('');
   const [condition, setCondition] = useState<Condition>(Condition.WORKING);
 
+  // Cast store pickups to the correct type (backend returns Request objects)
+  const pickups = storePickups as any[];
+
   useEffect(() => {
-    loadPickups();
+    fetchPickups();
   }, []);
 
-  const loadPickups = async () => {
-    try {
-      setIsLoading(true);
-      const response = await vendorApi.getPickups();
-      setPickups(response.data);
-    } catch (error) {
-      console.error('Failed to load pickups:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleAcceptPickup = async (pickupId: string) => {
+    Alert.alert(
+      'Accept Pickup',
+      'Do you want to accept this pickup?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Accept',
+          onPress: async () => {
+            try {
+              const token = await require('expo-secure-store').getItemAsync('auth_token');
+              const response = await fetch(`http://192.168.1.45:5000/api/vendor/pickups/${pickupId}/accept`, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
+              
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message);
+              }
+              
+              Alert.alert('Success', 'Pickup accepted!');
+              fetchPickups();
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to accept pickup');
+            }
+          },
+        },
+      ]
+    );
   };
 
   const handleCompletePickup = async () => {
@@ -49,7 +73,8 @@ export default function VendorHomeScreen() {
     }
 
     try {
-      await vendorApi.completePickup(selectedPickup.id, {
+      const pickupId = selectedPickup._id || selectedPickup.id;
+      await completePickup(pickupId, {
         otp,
         weight: parseFloat(weight),
         condition,
@@ -59,13 +84,12 @@ export default function VendorHomeScreen() {
       setModalVisible(false);
       setOtp('');
       setWeight('');
-      loadPickups();
     } catch (error: any) {
-      Alert.alert('Error', error.response?.data?.message || 'Failed to complete pickup');
+      Alert.alert('Error', error.message || 'Failed to complete pickup');
     }
   };
 
-  const openCompleteModal = (pickup: PickupWithRequest) => {
+  const openCompleteModal = (pickup: any) => {
     setSelectedPickup(pickup);
     setModalVisible(true);
   };
@@ -81,35 +105,61 @@ export default function VendorHomeScreen() {
     });
   };
 
-  const renderPickup = ({ item }: { item: PickupWithRequest }) => (
-    <View style={styles.card}>
-      <View style={styles.cardHeader}>
-        <Text style={styles.category}>{item.request.category}</Text>
-        <View style={styles.statusBadge}>
-          <Text style={styles.statusText}>{item.request.status}</Text>
+  const renderPickup = ({ item }: { item: any }) => {
+    // Backend returns Request objects directly, not PickupWithRequest
+    const itemId = item._id || item.id;
+    const request = item.request || item; // Handle both structures
+    
+    // Skip if request data is missing
+    if (!request || !request.category) {
+      return (
+        <View style={styles.card}>
+          <Text style={styles.emptyText}>Invalid pickup data</Text>
+        </View>
+      );
+    }
+    
+    return (
+      <View style={styles.card}>
+        <View style={styles.cardHeader}>
+          <Text style={styles.category}>{request.category}</Text>
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusText}>{request.status}</Text>
+          </View>
+        </View>
+        <View style={styles.cardBody}>
+          <Text style={styles.detail}>Quantity: {request.quantity} items</Text>
+          <Text style={styles.detail}>Address: {request.address}</Text>
+          <Text style={styles.detail}>Scheduled: {formatDate(request.scheduledTime || request.createdAt)}</Text>
+          {request.otp && <Text style={styles.detail}>OTP: {request.otp}</Text>}
+          
+          {request.status === 'COMPLETED' || item.completedAt ? (
+            <View style={styles.completedBadge}>
+              <Text style={styles.completedText}>✓ Completed</Text>
+            </View>
+          ) : (
+            <>
+              {request.status === 'IN_PROGRESS' && (
+                <TouchableOpacity
+                  style={styles.acceptButton}
+                  onPress={() => handleAcceptPickup(itemId)}
+                >
+                  <Text style={styles.acceptButtonText}>Accept Pickup</Text>
+                </TouchableOpacity>
+              )}
+              
+              <TouchableOpacity
+                style={styles.completeButton}
+                onPress={() => openCompleteModal({ ...item, request })}
+              >
+                <Text style={styles.completeButtonText}>Complete Pickup</Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </View>
-      <View style={styles.cardBody}>
-        <Text style={styles.detail}>Quantity: {item.request.quantity} items</Text>
-        <Text style={styles.detail}>Address: {item.request.address}</Text>
-        <Text style={styles.detail}>Scheduled: {formatDate(item.request.scheduledTime || item.request.createdAt)}</Text>
-        <Text style={styles.detail}>OTP: {item.otp}</Text>
-        
-        {!item.completedAt ? (
-          <TouchableOpacity
-            style={styles.completeButton}
-            onPress={() => openCompleteModal(item)}
-          >
-            <Text style={styles.completeButtonText}>Complete Pickup</Text>
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.completedBadge}>
-            <Text style={styles.completedText}>✓ Completed</Text>
-          </View>
-        )}
-      </View>
-    </View>
-  );
+    );
+  };
 
   if (isLoading) {
     return (
@@ -124,7 +174,7 @@ export default function VendorHomeScreen() {
       <FlatList
         data={pickups}
         renderItem={renderPickup}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => (item as any)._id || item.id}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -260,6 +310,30 @@ const styles = StyleSheet.create({
   detail: {
     fontSize: 14,
     color: '#7f8c8d',
+  },
+  acceptButton: {
+    backgroundColor: '#9b59b6',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  acceptButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  startButton: {
+    backgroundColor: '#3498db',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  startButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   completeButton: {
     backgroundColor: '#2980b9',

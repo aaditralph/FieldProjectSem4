@@ -71,29 +71,49 @@ export default function CitizenHomeScreen() {
     });
   };
 
-  const renderRequest = ({ item }: { item: Request }) => (
-    <TouchableOpacity
-      style={styles.card}
-      onPress={() => router.push(`/citizen/request/${item.id}` as any)}
-    >
-      <View style={styles.cardHeader}>
-        <Text style={styles.category}>{item.category}</Text>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
-          <Text style={styles.statusText}>{item.status}</Text>
+  const renderRequest = ({ item }: { item: Request }) => {
+    // Handle both _id (from backend) and id (from mock)
+    const itemId = (item as any)._id || item.id;
+    
+    return (
+      <TouchableOpacity
+        style={styles.card}
+        onPress={() => router.push(`/citizen/request/${itemId}` as any)}
+      >
+        <View style={styles.cardHeader}>
+          <Text style={styles.category}>{item.category}</Text>
+          <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
+            <Text style={styles.statusText}>{item.status}</Text>
+          </View>
         </View>
-      </View>
-      <View style={styles.cardBody}>
-        <Text style={styles.detail}>Quantity: {item.quantity} items</Text>
-        <Text style={styles.detail}>Address: {item.address}</Text>
-        <Text style={styles.detail}>Created: {formatDate(item.createdAt)}</Text>
-        {item.scheduledTime && (
-          <Text style={styles.detail}>
-            Scheduled: {formatDate(item.scheduledTime)}
-          </Text>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+        <View style={styles.cardBody}>
+          <Text style={styles.detail}>Quantity: {item.quantity} items</Text>
+          <Text style={styles.detail}>Address: {item.address}</Text>
+          <Text style={styles.detail}>Created: {formatDate(item.createdAt)}</Text>
+          {item.scheduledTime && (
+            <Text style={styles.detail}>
+              Scheduled: {formatDate(item.scheduledTime)}
+            </Text>
+          )}
+          
+          {/* Show assigned vendor info */}
+          {(item as any).assignedVendorId && (
+            <View style={styles.vendorCard}>
+              <Text style={styles.vendorLabel}>📦 Assigned Vendor</Text>
+              <Text style={styles.vendorName}>
+                {(item as any).assignedVendorId.name || 'Vendor'}
+              </Text>
+              {(item as any).assignedVendorId.phone && (
+                <Text style={styles.vendorPhone}>
+                  📞 {(item as any).assignedVendorId.phone}
+                </Text>
+              )}
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   if (isLoading && requests.length === 0) {
     return (
@@ -113,7 +133,7 @@ export default function CitizenHomeScreen() {
       <FlatList
         data={requests}
         renderItem={renderRequest}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => (item as any)._id || item.id}
         contentContainerStyle={styles.list}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
@@ -198,6 +218,30 @@ const styles = StyleSheet.create({
   detail: {
     fontSize: 14,
     color: '#7f8c8d',
+  },
+  vendorCard: {
+    backgroundColor: '#e8f5e9',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 8,
+    borderLeftWidth: 3,
+    borderLeftColor: '#27ae60',
+  },
+  vendorLabel: {
+    fontSize: 12,
+    color: '#27ae60',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  vendorName: {
+    fontSize: 14,
+    color: '#2c3e50',
+    fontWeight: '600',
+  },
+  vendorPhone: {
+    fontSize: 13,
+    color: '#7f8c8d',
+    marginTop: 2,
   },
   empty: {
     alignItems: 'center',

@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { adminApi, driveApi, pricingApi } from '../api/endpoints';
+import { mockApi } from '../api/mock';
 import { CreateDrivePayload, Drive, PricingConfig, UpdatePricingPayload } from '../types';
 
 interface AdminState {
@@ -26,6 +27,8 @@ interface AdminState {
   clearError: () => void;
 }
 
+const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
+
 export const useAdminStore = create<AdminState>((set, get) => ({
   drives: [],
   pricingConfigs: [],
@@ -37,7 +40,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchDrives: async () => {
     try {
       set({ isLoading: true, error: null });
-      const response = await driveApi.getAll();
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.getDrives() };
+      } else {
+        response = await driveApi.getAll();
+      }
+      
       set({ drives: response.data, isLoading: false });
     } catch (error: any) {
       set({
@@ -97,7 +107,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchPricing: async () => {
     try {
       set({ isLoading: true, error: null });
-      const response = await pricingApi.getAll();
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.getPricing() };
+      } else {
+        response = await pricingApi.getAll();
+      }
+      
       set({ pricingConfigs: response.data, isLoading: false });
     } catch (error: any) {
       set({
@@ -127,7 +144,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchStats: async () => {
     try {
       set({ isLoading: true, error: null });
-      const response = await adminApi.getStats();
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.getStats() };
+      } else {
+        response = await adminApi.getStats();
+      }
+      
       set({ stats: response.data, isLoading: false });
     } catch (error: any) {
       set({
@@ -140,7 +164,14 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   fetchReports: async (period: 'daily' | 'weekly' | 'monthly') => {
     try {
       set({ isLoading: true, error: null });
-      const response = await adminApi.getReports(period);
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.getReports(period) };
+      } else {
+        response = await adminApi.getReports(period);
+      }
+      
       set({ reports: response.data, isLoading: false });
     } catch (error: any) {
       set({
