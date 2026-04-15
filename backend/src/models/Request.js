@@ -36,9 +36,9 @@ const requestSchema = new mongoose.Schema({
   scheduledTime: {
     type: Date,
   },
-  imageUrl: {
+  imageUrls: [{
     type: String,
-  },
+  }],
   otp: {
     type: String,
   },

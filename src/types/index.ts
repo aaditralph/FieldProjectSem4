@@ -19,7 +19,7 @@ export interface Request {
   address: string;
   status: RequestStatus;
   scheduledTime?: string;
-  imageUrl?: string;
+  imageUrls?: string[];
   createdAt: string;
   updatedAt: string;
   assignedVendorId?: string;
@@ -88,7 +88,7 @@ export interface CreateRequestPayload {
   category: Category;
   quantity: number;
   address: string;
-  imageUrl?: string;
+  imageUrls?: string[];
   type: 'HOME_PICKUP' | 'DRIVE';
   driveId?: string;
   scheduledTime?: string;

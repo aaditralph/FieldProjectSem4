@@ -48,6 +48,7 @@ const mockRequests: Request[] = [
     quantity: 2,
     address: '123 Main St, Mumbai',
     status: RequestStatus.CREATED,
+    imageUrls: [],
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -59,6 +60,7 @@ const mockRequests: Request[] = [
     address: '123 Main St, Mumbai',
     status: RequestStatus.SCHEDULED,
     scheduledTime: '2024-12-20T10:00:00Z',
+    imageUrls: ['example-image.jpg'],
     createdAt: new Date(Date.now() - 86400000).toISOString(),
     updatedAt: new Date().toISOString(),
     otp: '1234',
@@ -176,6 +178,27 @@ export const mockApi = {
     request.status = RequestStatus.CANCELLED;
     request.updatedAt = new Date().toISOString();
     return request;
+  },
+
+  uploadImages: async (id: string, formData: any) => {
+    await delay(500);
+    const request = mockRequests.find(r => r.id === id);
+    if (!request) throw new Error('Request not found');
+    
+    if (!request.imageUrls) {
+      request.imageUrls = [];
+    }
+    
+    // Simulate uploaded images with sample filenames
+    const newImages = [`uploaded_${Date.now()}_1.jpg`, `uploaded_${Date.now()}_2.jpg`];
+    request.imageUrls.push(...newImages);
+    request.updatedAt = new Date().toISOString();
+    
+    return {
+      message: 'Images uploaded successfully',
+      imageUrls: request.imageUrls,
+      newImages: newImages,
+    };
   },
 
   // Drives

@@ -10,12 +10,13 @@ interface RequestState {
   auditLogs: AuditLog[];
   isLoading: boolean;
   error: string | null;
-  
+
   fetchRequests: () => Promise<void>;
   fetchRequestById: (id: string) => Promise<void>;
   createRequest: (data: CreateRequestPayload) => Promise<Request>;
   scheduleRequest: (id: string, data: SchedulePayload) => Promise<void>;
   cancelRequest: (id: string) => Promise<void>;
+  uploadRequestImages: (id: string, files: File[]) => Promise<void>;
   fetchDrives: () => Promise<void>;
   joinDrive: (id: string) => Promise<void>;
   fetchAuditLogs: (requestId: string) => Promise<void>;
@@ -207,6 +208,45 @@ export const useRequestStore = create<RequestState>((set, get) => ({
         isLoading: false,
         error: error.response?.data?.message || 'Failed to fetch audit logs',
       });
+    }
+  },
+
+  uploadRequestImages: async (id: string, files: File[]) => {
+    try {
+      set({ isLoading: true, error: null });
+
+      if (files.length === 0) {
+        set({ isLoading: false });
+        return;
+      }
+
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append('images', file);
+      });
+
+      const response = await requestApi.uploadImages(id, formData);
+
+      // Update imageUrls in current request and requests list
+      const updatedRequest = response.data;
+      
+      set({
+        currentRequest: updatedRequest,
+        isLoading: false,
+      });
+
+      // Also update in the requests list
+      const requests = get().requests.map(req =>
+        req.id === id ? updatedRequest : req
+      );
+      set({ requests });
+
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to upload images',
+      });
+      throw error;
     }
   },
 

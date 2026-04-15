@@ -45,6 +45,9 @@ app.use('/api/pricing', pricingRoutes);
 app.use('/api/audit', auditRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Serve static files (uploaded images)
+app.use('/uploads', express.static('uploads'));
+
 // Health check
 app.get('/api/health', (req, res) => {
   res.json({ 

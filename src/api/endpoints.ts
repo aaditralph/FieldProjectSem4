@@ -28,16 +28,22 @@ export const authApi = {
 
 // Request endpoints
 export const requestApi = {
-  create: (data: CreateRequestPayload) => 
+  create: (data: CreateRequestPayload) =>
     apiClient.post<Request>('/requests', data),
-  getAll: (params?: { status?: string; page?: number }) => 
+  getAll: (params?: { status?: string; page?: number }) =>
     apiClient.get<Request[]>('/requests', { params }),
-  getById: (id: string) => 
+  getById: (id: string) =>
     apiClient.get<Request>(`/requests/${id}`),
-  schedule: (id: string, data: SchedulePayload) => 
+  schedule: (id: string, data: SchedulePayload) =>
     apiClient.post<Request>(`/requests/${id}/schedule`, data),
-  cancel: (id: string) => 
+  cancel: (id: string) =>
     apiClient.post<Request>(`/requests/${id}/cancel`),
+  uploadImages: (id: string, formData: FormData) =>
+    apiClient.post<{ message: string; imageUrls: string[] }>(`/requests/${id}/upload-images`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    }),
 };
 
 // Drive endpoints

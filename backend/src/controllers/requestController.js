@@ -1,6 +1,7 @@
 const Request = require('../models/Request');
 const AuditLog = require('../models/AuditLog');
 const { generateOTP } = require('../utils/helpers');
+const { deleteFiles } = require('../utils/fileUtils');
 
 // @desc    Create a new e-waste request
 // @route   POST /requests
@@ -149,13 +150,20 @@ const cancelRequest = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    // Check if can be cancelled (before scheduled time)
-    if (request.status === 'COMPLETED' || request.status === 'CANCELLED') {
-      return res.status(400).json({ message: 'Request cannot be cancelled' });
-    }
+  // Check if can be cancelled (before scheduled time)
+  if (request.status === 'COMPLETED' || request.status === 'CANCELLED') {
+    return res.status(400).json({ message: 'Request cannot be cancelled' });
+  }
 
-    request.status = 'CANCELLED';
-    await request.save();
+  request.status = 'CANCELLED';
+
+  // Delete images from filesystem
+  if (request.imageUrls && request.imageUrls.length > 0) {
+    deleteFiles(request.imageUrls);
+    request.imageUrls = [];
+  }
+
+  await request.save();
 
     // Log action
     await AuditLog.create({
@@ -168,6 +176,115 @@ const cancelRequest = async (req, res) => {
     res.json(request);
   } catch (error) {
     console.error('Cancel request error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc Upload images for a request
+// @route POST /requests/:id/upload-images
+// @access Private (Citizen)
+const uploadRequestImage = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+
+    if (!request) {
+      // Clean up uploaded files if request not found
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          if (file.path) {
+            const fs = require('fs');
+            fs.unlink(file.path, (err) => {
+              if (err) console.error('Error deleting file:', err);
+            });
+          }
+        });
+      }
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    // Check if user owns this request
+    if (request.userId.toString() !== req.user.id) {
+      // Clean up uploaded files
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          if (file.path) {
+            const fs = require('fs');
+            fs.unlink(file.path, (err) => {
+              if (err) console.error('Error deleting file:', err);
+            });
+          }
+        });
+      }
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    // Check if request can accept images (status must be CREATED or SCHEDULED)
+    if (!['CREATED', 'SCHEDULED'].includes(request.status)) {
+      // Clean up uploaded files
+      if (req.files && req.files.length > 0) {
+        req.files.forEach(file => {
+          if (file.path) {
+            const fs = require('fs');
+            fs.unlink(file.path, (err) => {
+              if (err) console.error('Error deleting file:', err);
+            });
+          }
+        });
+      }
+      return res.status(400).json({ 
+        message: 'Images can only be added to CREATED or SCHEDULED requests' 
+      });
+    }
+
+    // Process uploaded files
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ message: 'No files uploaded' });
+    }
+
+    // Store file paths
+    const uploadedFilenames = req.files.map(file => file.filename);
+    
+    // Append to existing imageUrls or create new array
+    if (!request.imageUrls) {
+      request.imageUrls = [];
+    }
+    request.imageUrls.push(...uploadedFilenames);
+
+    await request.save();
+
+    // Log action
+    await AuditLog.create({
+      action: 'request_images_uploaded',
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      requestId: request._id,
+      meta: {
+        imageCount: uploadedFilenames.length,
+        filenames: uploadedFilenames,
+      },
+    });
+
+    res.json({
+      message: 'Images uploaded successfully',
+      imageUrls: request.imageUrls,
+      newImages: uploadedFilenames,
+    });
+
+  } catch (error) {
+    console.error('Upload request image error:', error);
+    
+    // Clean up uploaded files on error
+    if (req.files && req.files.length > 0) {
+      req.files.forEach(file => {
+        if (file.path) {
+          const fs = require('fs');
+          fs.unlink(file.path, (err) => {
+            if (err) console.error('Error deleting file:', err);
+          });
+        }
+      });
+    }
+    
     res.status(500).json({ message: 'Server error', error: error.message });
   }
 };
