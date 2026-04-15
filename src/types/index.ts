@@ -103,6 +103,7 @@ export interface CompletePickupPayload {
   otp: string;
   weight: number;
   condition: Condition;
+  finalPrice?: number;
 }
 
 export interface CreateDrivePayload {

@@ -58,20 +58,11 @@ export default function AdminTabs() {
         }}
       />
       <Tabs.Screen
-        name="pricing"
+        name="completed"
         options={{
-          title: 'Pricing',
+          title: 'History',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pricetag-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="reports"
-        options={{
-          title: 'Reports',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="document-text-outline" size={size} color={color} />
+            <Ionicons name="checkmark-circle-outline" size={size} color={color} />
           ),
         }}
       />

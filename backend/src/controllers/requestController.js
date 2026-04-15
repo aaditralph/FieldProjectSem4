@@ -8,12 +8,11 @@ const { deleteFiles } = require('../utils/fileUtils');
 // @access  Private (Citizen)
 const createRequest = async (req, res) => {
   try {
-    const { category, quantity, address, imageUrl, type, driveId, scheduledTime } = req.body;
+    const { items, address, imageUrl, type, driveId, scheduledTime } = req.body;
 
     const request = await Request.create({
       userId: req.user.id,
-      category,
-      quantity,
+      items,
       address,
       imageUrl,
       type: type || 'HOME_PICKUP',
@@ -27,7 +26,7 @@ const createRequest = async (req, res) => {
       actorId: req.user.id,
       actorRole: req.user.role,
       requestId: request._id,
-      meta: { category, quantity, type },
+      meta: { items, type },
     });
 
     res.status(201).json(request);

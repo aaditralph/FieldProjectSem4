@@ -93,8 +93,76 @@ const getAllRequests = async (req, res) => {
   }
 };
 
+// @desc    Create a vendor
+// @route   POST /admin/vendors
+// @access  Private (Admin)
+const createVendor = async (req, res) => {
+  try {
+    const { name, email, password, phone } = req.body;
+
+    let userExists = await User.findOne({ $or: [{ email }, { phone }] });
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists with that email or phone' });
+    }
+
+    const vendorData = {
+      name,
+      phone,
+      password, // User model pre-save hook handles hashing
+      role: 'VENDOR',
+      isActive: true,
+      address: 'Not Provided',
+    };
+    
+    // Only include email if it actually has content to prevent RegEx schema break
+    if (email && email.trim() !== '') {
+      vendorData.email = email;
+    }
+
+    const vendor = await User.create(vendorData);
+
+    res.status(201).json({
+      _id: vendor._id,
+      name: vendor.name,
+      email: vendor.email,
+      phone: vendor.phone,
+      role: vendor.role,
+      isActive: vendor.isActive,
+    });
+  } catch (error) {
+    console.error('Create vendor error:', error);
+    if (error.errInfo && error.errInfo.details) {
+      console.error('Validation details:', JSON.stringify(error.errInfo.details, null, 2));
+    }
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Toggle vendor active status
+// @route   PUT /admin/vendors/:id/toggle-status
+// @access  Private (Admin)
+const toggleVendorStatus = async (req, res) => {
+  try {
+    const vendor = await User.findOne({ _id: req.params.id, role: 'VENDOR' });
+
+    if (!vendor) {
+      return res.status(404).json({ message: 'Vendor not found' });
+    }
+
+    vendor.isActive = !vendor.isActive;
+    await vendor.save();
+
+    res.json(vendor);
+  } catch (error) {
+    console.error('Toggle vendor error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   getVendors,
   assignVendor,
   getAllRequests,
+  createVendor,
+  toggleVendorStatus,
 };

@@ -6,24 +6,26 @@ const requestSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  category: {
-    type: String,
-    required: [true, 'Category is required'],
-    enum: [
-      'Mobile Phone',
-      'Laptop',
-      'Desktop Computer',
-      'Television',
-      'Printer',
-      'Battery',
-      'Other Electronics',
-    ],
-  },
-  quantity: {
-    type: Number,
-    required: [true, 'Quantity is required'],
-    min: [1, 'Quantity must be at least 1'],
-  },
+  items: [{
+    category: {
+      type: String,
+      required: [true, 'Category is required'],
+      enum: [
+        'Mobile Phone',
+        'Laptop',
+        'Desktop Computer',
+        'Television',
+        'Printer',
+        'Battery',
+        'Other Electronics',
+      ],
+    },
+    quantity: {
+      type: Number,
+      required: [true, 'Quantity is required'],
+      min: [1, 'Quantity must be at least 1'],
+    }
+  }],
   address: {
     type: String,
     required: [true, 'Address is required'],
@@ -62,6 +64,9 @@ const requestSchema = new mongoose.Schema({
   updatedAt: {
     type: Date,
     default: Date.now,
+  },
+  finalPrice: {
+    type: Number,
   },
 });
 

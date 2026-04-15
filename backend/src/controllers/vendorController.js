@@ -12,7 +12,7 @@ const getPickups = async (req, res) => {
   try {
     const requests = await Request.find({
       assignedVendorId: req.user.id,
-      status: { $in: ['SCHEDULED', 'IN_PROGRESS'] },
+      status: { $in: ['SCHEDULED', 'IN_PROGRESS', 'COMPLETED'] },
     })
       .populate('userId', 'name phone address')
       .sort({ scheduledTime: 1 });
@@ -133,7 +133,7 @@ const getPickupById = async (req, res) => {
 // @access  Private (Vendor)
 const completePickup = async (req, res) => {
   try {
-    const { otp, weight, condition } = req.body;
+    const { otp, evaluatedItems, finalPrice: manualPrice } = req.body;
 
     const request = await Request.findById(req.params.id);
 
@@ -146,32 +146,33 @@ const completePickup = async (req, res) => {
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
-    // Get pricing config
-    const pricingConfig = await PricingConfig.findOne({ category: request.category });
-
-    if (!pricingConfig) {
-      return res.status(404).json({ message: 'Pricing configuration not found' });
+    let calculatedFinalPrice = 0;
+    
+    // Calculate total price by looping over items
+    for (const item of evaluatedItems) {
+      const pricingConfig = await PricingConfig.findOne({ category: item.category });
+      let itemPrice = 0;
+      
+      if (pricingConfig) {
+        const conditionFactor = pricingConfig.conditionFactors[item.condition] || 0.1;
+        itemPrice = calculatePrice(pricingConfig.ratePerKg, item.weight, conditionFactor);
+      }
+      calculatedFinalPrice += itemPrice;
     }
 
-    // Calculate final price
-    const conditionFactor = pricingConfig.conditionFactors[condition];
-    const finalPrice = calculatePrice(
-      pricingConfig.ratePerKg,
-      weight,
-      conditionFactor
-    );
+    const finalPrice = manualPrice !== undefined ? Number(manualPrice) : calculatedFinalPrice;
 
     // Create pickup record
     const pickup = await Pickup.create({
       requestId: request._id,
       vendorId: req.user.id,
-      weight,
-      condition,
+      evaluatedItems,
       finalPrice,
     });
 
     // Update request status
     request.status = 'COMPLETED';
+    request.finalPrice = finalPrice;
     await request.save();
 
     // Create transaction
@@ -189,7 +190,7 @@ const completePickup = async (req, res) => {
       actorId: req.user.id,
       actorRole: req.user.role,
       requestId: request._id,
-      meta: { weight, condition, finalPrice },
+      meta: { evaluatedItems, finalPrice },
     });
 
     await AuditLog.create({

@@ -7,7 +7,11 @@ const { generateToken, generateOTP } = require('../utils/helpers');
 // @access  Public
 const sendOtp = async (req, res) => {
   try {
-    const { phone } = req.body;
+    const { phone, role } = req.body;
+
+    if (role === 'VENDOR' || role === 'ADMIN') {
+      return res.status(403).json({ message: 'Vendors can only be created by admin' });
+    }
 
     // Find or create user (auto-registration on first OTP request)
     let user = await User.findOne({ phone });
@@ -59,6 +63,10 @@ const login = async (req, res) => {
     // For demo, we accept any 4-digit OTP
     if (otp !== '1234' && otp.length !== 4) {
       return res.status(401).json({ message: 'Invalid OTP' });
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({ message: 'Your account is disabled. Contact admin.' });
     }
 
     // Generate JWT token

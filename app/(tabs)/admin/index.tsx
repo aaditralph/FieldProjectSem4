@@ -7,6 +7,7 @@ import {
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
@@ -25,6 +26,10 @@ export default function AdminHomeScreen() {
   const [assignModalVisible, setAssignModalVisible] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string>('');
+  
+  // New vendor management state
+  const [createVendorModalVisible, setCreateVendorModalVisible] = useState(false);
+  const [newVendor, setNewVendor] = useState({ name: '', email: '', phone: '', password: '' });
 
   useEffect(() => {
     loadDashboard();
@@ -138,6 +143,52 @@ export default function AdminHomeScreen() {
     }
   };
 
+  const handleCreateVendor = async () => {
+    if (!newVendor.name || !newVendor.phone || !newVendor.password) {
+      Alert.alert('Error', 'Name, phone, and password are required');
+      return;
+    }
+    try {
+      const response = await fetch('http://192.168.1.45:5000/api/admin/vendors', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${(await require('expo-secure-store').getItemAsync('auth_token'))}`,
+        },
+        body: JSON.stringify(newVendor),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message);
+      }
+      Alert.alert('Success', 'Vendor created successfully!');
+      setCreateVendorModalVisible(false);
+      setNewVendor({ name: '', email: '', phone: '', password: '' });
+      loadVendors();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to create vendor');
+    }
+  };
+
+  const handleToggleVendorStatus = async (vendorId: string) => {
+    try {
+      const response = await fetch(`http://192.168.1.45:5000/api/admin/vendors/${vendorId}/toggle-status`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${(await require('expo-secure-store').getItemAsync('auth_token'))}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to toggle status');
+      }
+      loadVendors();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to update vendor');
+    }
+  };
+
   const openAssignModal = (request: any) => {
     setSelectedRequest(request);
     setSelectedVendorId('');
@@ -230,6 +281,42 @@ export default function AdminHomeScreen() {
         )}
       </View>
 
+
+
+      {/* Vendor Management Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>Vendor Management</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => setCreateVendorModalVisible(true)}>
+            <Text style={styles.addButtonText}>+ Add</Text>
+          </TouchableOpacity>
+        </View>
+        {vendors.length === 0 ? (
+          <Text style={styles.emptyText}>No vendors found</Text>
+        ) : (
+          vendors.map((vendor) => (
+            <View key={vendor._id} style={styles.manageVendorCard}>
+              <View style={styles.manageVendorInfo}>
+                <Text style={styles.manageVendorName}>{vendor.name}</Text>
+                <Text style={styles.manageVendorDetail}>📞 {vendor.phone}</Text>
+                {!!vendor.email && <Text style={styles.manageVendorDetail}>✉️ {vendor.email}</Text>}
+                <Text style={[styles.statusBadgeText, vendor.isActive ? styles.activeText : styles.inactiveText]}>
+                  {vendor.isActive ? 'Active' : 'Disabled'}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.toggleBtn, vendor.isActive ? styles.disableBtn : styles.enableBtn]}
+                onPress={() => handleToggleVendorStatus(vendor._id)}
+              >
+                <Text style={styles.toggleBtnText}>
+                  {vendor.isActive ? 'Disable' : 'Enable'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ))
+        )}
+      </View>
+
       {/* Assign Vendor Modal */}
       <Modal
         visible={assignModalVisible}
@@ -276,6 +363,41 @@ export default function AdminHomeScreen() {
                 onPress={handleAssignVendor}
               >
                 <Text style={styles.submitButtonText}>Assign</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Create Vendor Modal */}
+      <Modal
+        visible={createVendorModalVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setCreateVendorModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Create New Vendor</Text>
+            
+            <Text style={styles.label}>Name *</Text>
+            <TextInput style={styles.input} value={newVendor.name} onChangeText={t => setNewVendor({...newVendor, name: t})} />
+
+            <Text style={styles.label}>Phone *</Text>
+            <TextInput style={styles.input} value={newVendor.phone} keyboardType="phone-pad" onChangeText={t => setNewVendor({...newVendor, phone: t})} />
+
+            <Text style={styles.label}>Email (optional)</Text>
+            <TextInput style={styles.input} value={newVendor.email} keyboardType="email-address" onChangeText={t => setNewVendor({...newVendor, email: t})} />
+
+            <Text style={styles.label}>Password *</Text>
+            <TextInput style={styles.input} value={newVendor.password} secureTextEntry onChangeText={t => setNewVendor({...newVendor, password: t})} />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setCreateVendorModalVisible(false)}>
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.submitButton]} onPress={handleCreateVendor}>
+                <Text style={styles.submitButtonText}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -507,5 +629,69 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  sectionHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  addButton: {
+    backgroundColor: '#2ecc71',
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  manageVendorCard: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#f8f9fa',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    alignItems: 'center',
+  },
+  manageVendorInfo: {
+    flex: 1,
+  },
+  manageVendorName: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  manageVendorDetail: {
+    fontSize: 13,
+    color: '#7f8c8d',
+    marginTop: 2,
+  },
+  statusBadgeText: {
+    marginTop: 4,
+    fontSize: 12,
+    fontWeight: 'bold',
+  },
+  activeText: { color: '#27ae60' },
+  inactiveText: { color: '#e74c3c' },
+  toggleBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginLeft: 10,
+  },
+  disableBtn: { backgroundColor: '#e74c3c' },
+  enableBtn: { backgroundColor: '#2ecc71' },
+  toggleBtnText: { color: '#fff', fontWeight: 'bold' },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    padding: 10,
+    borderRadius: 6,
+    marginBottom: 10,
+    fontSize: 16,
   },
 });

@@ -11,16 +11,22 @@ const pickupSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  weight: {
-    type: Number,
-    required: [true, 'Weight is required'],
-    min: [0.1, 'Weight must be at least 0.1 kg'],
-  },
-  condition: {
-    type: String,
-    enum: ['WORKING', 'PARTIAL', 'SCRAP'],
-    required: [true, 'Condition is required'],
-  },
+  evaluatedItems: [{
+    category: {
+      type: String,
+      required: true,
+    },
+    weight: {
+      type: Number,
+      required: [true, 'Weight is required'],
+      min: [0.1, 'Weight must be at least 0.1 kg'],
+    },
+    condition: {
+      type: String,
+      enum: ['WORKING', 'PARTIAL', 'SCRAP'],
+      required: [true, 'Condition is required'],
+    },
+  }],
   finalPrice: {
     type: Number,
     required: true,

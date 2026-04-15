@@ -21,6 +21,7 @@ export default function VendorHomeScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [otp, setOtp] = useState('');
   const [weight, setWeight] = useState('');
+  const [finalPrice, setFinalPrice] = useState('');
   const [condition, setCondition] = useState<Condition>(Condition.WORKING);
 
   // Cast store pickups to the correct type (backend returns Request objects)
@@ -74,16 +75,24 @@ export default function VendorHomeScreen() {
 
     try {
       const pickupId = selectedPickup._id || selectedPickup.id;
-      await completePickup(pickupId, {
+      
+      const payload: any = {
         otp,
         weight: parseFloat(weight),
         condition,
-      });
+      };
+
+      if (finalPrice && !isNaN(parseFloat(finalPrice))) {
+        payload.finalPrice = parseFloat(finalPrice);
+      }
+
+      await completePickup(pickupId, payload);
 
       Alert.alert('Success', 'Pickup completed successfully!');
       setModalVisible(false);
       setOtp('');
       setWeight('');
+      setFinalPrice('');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to complete pickup');
     }
@@ -173,7 +182,7 @@ export default function VendorHomeScreen() {
   return (
     <View style={styles.container}>
       <FlatList
-        data={pickups}
+        data={pickups.filter(p => (p.request || p).status !== 'COMPLETED')}
         renderItem={renderPickup}
         keyExtractor={(item) => (item as any)._id || item.id}
         contentContainerStyle={styles.list}
@@ -209,6 +218,15 @@ export default function VendorHomeScreen() {
               keyboardType="decimal-pad"
               value={weight}
               onChangeText={setWeight}
+            />
+
+            <Text style={styles.label}>Final Price Override (₹) - Optional</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter calculated payout"
+              keyboardType="decimal-pad"
+              value={finalPrice}
+              onChangeText={setFinalPrice}
             />
 
             <Text style={styles.label}>Condition</Text>

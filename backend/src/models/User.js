@@ -23,6 +23,10 @@ const userSchema = new mongoose.Schema({
     enum: ['CITIZEN', 'VENDOR', 'ADMIN'],
     default: 'CITIZEN',
   },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
   address: {
     type: String,
     required: [true, 'Address is required'],
