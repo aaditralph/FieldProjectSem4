@@ -6,8 +6,8 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "ewaste",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+      "userInterfaceStyle": "automatic",
+      "newArchEnabled": false,
     "ios": {
       "supportsTablet": true
     },

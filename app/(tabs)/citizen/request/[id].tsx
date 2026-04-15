@@ -233,7 +233,7 @@ export default function RequestDetailScreen() {
           <Text style={styles.sectionTitle}>Request Info</Text>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Request ID</Text>
-            <Text style={[styles.detailValue, styles.mono]}>{currentRequest.id.slice(-8)}</Text>
+            <Text style={[styles.detailValue, styles.mono]}>{currentRequest.id?.slice?.(-8) || 'N/A'}</Text>
           </View>
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Submitted</Text>

@@ -242,7 +242,7 @@ export default function AdminRequestDetailScreen() {
           
           <View style={styles.detailRow}>
             <Text style={styles.detailLabel}>Request ID</Text>
-            <Text style={[styles.detailValue, styles.mono]}>{currentRequest.id.slice(-8)}</Text>
+            <Text style={[styles.detailValue, styles.mono]}>{currentRequest.id?.slice?.(-8) || 'N/A'}</Text>
           </View>
 
           <View style={styles.detailRow}>

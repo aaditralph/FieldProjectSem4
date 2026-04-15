@@ -49,6 +49,24 @@ npm run dev   # Web on http://localhost:3000
 - Images stored locally in `/backend/uploads/` - accessible at `http://localhost:5000/uploads/`
 - DateSlot model manages ticket capacity per time slot
 - CORS enabled for web dashboard on port 3000
+- MongoDB connection string format: No duplicate `mongodb://` prefix (was: `mongodb://mongodb://...`, should be: `mongodb://...`)  
+- Auth credentials: `mongodb://admin:ewaste_secure_password_2024@localhost:27017/ewaste?authSource=admin`
+- Application user: `mongodb://ewaste_user:ewaste_password_2024@localhost:27017/ewaste`
+
+## Environment Files Structure
+
+**Backend** (`backend/.env`):
+```bash
+MONGODB_URI=mongodb://admin:ewaste_secure_password_2024@localhost:27017/ewaste?authSource=admin
+JWT_SECRET=your_jwt_secret_here
+DEFAULT_VENDOR_ID=from_seed_output
+```
+
+**Mobile App** (`.env` in root):
+```bash
+EXPO_PUBLIC_API_URL=http://YOUR_IP:5000/api  # NOT localhost
+EXPO_PUBLIC_USE_MOCK=false  # Set 'true' for offline testing without backend
+```
 
 ## Mobile App Structure
 
@@ -74,6 +92,69 @@ npm run dev   # Web on http://localhost:3000
 - **API**: Axios client in `src/api/`
 - **Types**: `src/types/index.ts`
 - **Image upload**: `expo-image-picker` + FormData to `/api/upload`
+- **Mock Mode**: Set `EXPO_PUBLIC_USE_MOCK=true` to test without backend running
+- **Auth Token Storage**: Stored in `expo-secure-store` (SecureStore) - survives app restarts
+- **Test OTP**: Always `1234` (hardcoded in mock and backend seed)
+
+## Debugging Commands
+
+**Clear ALL caches when weird errors occur:**
+```bash
+# Stop expo first, then run:
+rm -rf .expo/
+rm -rf node_modules/.cache
+npx expo start --clear
+
+# If entry.js corrupted (shows Bun console.log):
+cat > expo-router/entry.js << 'EOF'
+import "expo-router/entry";
+EOF
+```
+
+## Critical Expo Go Fixes
+
+### AppRegistryBinding Error (Global not installed)
+**Cause:** New architecture incompatibility + corrupted entry file  
+**Fix:**
+1. Set `"newArchEnabled": false` in `app.json`
+2. Ensure `babel.config.js` exists:
+```js
+module.exports = function (api) {
+  api.cache(true);
+  return {
+    presets: ['babel-preset-expo'],
+    plugins: ['react-native-reanimated/plugin'],
+  };
+};
+```
+3. **CRITICAL:** Check `expo-router/entry.js` is not corrupted:
+```js
+// Should be ONLY this line, NOT a console.log:
+import "expo-router/entry";
+```
+4. Clear cache: `npx expo start --clear`
+
+### Request Detail Page Crash
+**Error:** `cannot read property 'slice' of undefined`  
+**Cause:** `currentRequest.id` is undefined when data loads  
+**Fix:** Use optional chaining:
+```typescript
+// Change this:
+{currentRequest.id.slice(-8)}
+// To this:
+{currentRequest.id?.slice?.(-8) || 'N/A'}
+```
+**Files:** `app/(tabs)/citizen/request/[id].tsx` line 236, `app/(tabs)/admin/request/[id].tsx` line 245
+
+### Mobile App Won't Connect to Backend
+**Cause:** Using `localhost` on device/emulator  
+**Fix:** Use machine's IP address:
+```bash
+# Edit .env in project root:
+EXPO_PUBLIC_API_URL=http://192.168.X.X:5000/api  # Your machine's IP
+```
+**Android Emulator:** Use `http://10.0.2.2:5000/api`  
+**Requirement:** Phone/emulator must be on same WiFi network
 
 ## Common Mistakes
 
@@ -82,6 +163,7 @@ npm run dev   # Web on http://localhost:3000
 - Missing MongoDB before backend start
 - Web dashboard CORS errors - backend must run first
 - Different `DEFAULT_VENDOR_ID` in web dashboard if deployed separately
+- Not clearing cache after fixing entry.js or babel config
 
 ## API Endpoints
 
