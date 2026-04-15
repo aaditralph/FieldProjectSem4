@@ -81,13 +81,19 @@ export default function CitizenHomeScreen() {
         onPress={() => router.push(`/citizen/request/${itemId}` as any)}
       >
         <View style={styles.cardHeader}>
-          <Text style={styles.category}>{item.category}</Text>
+          <Text style={styles.category}>
+            {item.items && item.items.length > 1 
+              ? `Multiple Items (${item.items.length})` 
+              : item.items && item.items[0]?.category}
+          </Text>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
             <Text style={styles.statusText}>{item.status}</Text>
           </View>
         </View>
         <View style={styles.cardBody}>
-          <Text style={styles.detail}>Quantity: {item.quantity} items</Text>
+          <Text style={styles.detail}>
+            Items: {item.items?.map(i => `${i.category} x${i.quantity}`).join(', ')}
+          </Text>
           <Text style={styles.detail}>Address: {item.address}</Text>
           <Text style={styles.detail}>Created: {formatDate(item.createdAt)}</Text>
           {item.scheduledTime && (

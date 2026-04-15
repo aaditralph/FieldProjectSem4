@@ -35,13 +35,19 @@ export default function CompletedScreen() {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={styles.category}>{request.category}</Text>
+          <Text style={styles.category}>
+            {request.items && request.items.length > 1 
+              ? `Multiple Items (${request.items.length})` 
+              : request.items && request.items[0]?.category}
+          </Text>
           <View style={styles.statusBadge}>
             <Text style={styles.statusText}>{request.status}</Text>
           </View>
         </View>
         <View style={styles.cardBody}>
-          <Text style={styles.detail}>Quantity: {request.quantity} items</Text>
+          <Text style={styles.detail}>
+            Items: {request.items?.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
+          </Text>
           <Text style={styles.detail}>Address: {request.address}</Text>
           <Text style={styles.detail}>Scheduled: {formatDate(request.scheduledTime || request.createdAt)}</Text>
           <View style={styles.completedBadge}>

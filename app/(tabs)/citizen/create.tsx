@@ -14,17 +14,45 @@ import {
 } from 'react-native';
 
 export default function CreateRequestScreen() {
-  const [category, setCategory] = useState<Category>(Category.MOBILE);
-  const [quantity, setQuantity] = useState('');
+  const [items, setItems] = useState<{ category: Category; quantity: number }[]>([]);
+  const [currentCategory, setCurrentCategory] = useState<Category>(Category.MOBILE);
+  const [currentQuantity, setCurrentQuantity] = useState('');
+  
   const [address, setAddress] = useState('');
   const [type, setType] = useState<'HOME_PICKUP' | 'DRIVE'>('HOME_PICKUP');
   
   const { createRequest, isLoading, error, clearError } = useRequestStore();
   const router = useRouter();
 
-  const handleSubmit = async () => {
-    if (!quantity || parseInt(quantity) < 1) {
+  const handleAddItem = () => {
+    if (!currentQuantity || parseInt(currentQuantity) < 1) {
       Alert.alert('Invalid Quantity', 'Please enter a valid quantity');
+      return;
+    }
+    
+    // Check if category already exists, update quantity
+    const existingIndex = items.findIndex(i => i.category === currentCategory);
+    if (existingIndex >= 0) {
+      const newItems = [...items];
+      newItems[existingIndex].quantity += parseInt(currentQuantity);
+      setItems(newItems);
+    } else {
+      setItems([...items, { category: currentCategory, quantity: parseInt(currentQuantity) }]);
+    }
+    
+    setCurrentQuantity('');
+    setCurrentCategory(Category.MOBILE);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    const newItems = [...items];
+    newItems.splice(index, 1);
+    setItems(newItems);
+  };
+
+  const handleSubmit = async () => {
+    if (items.length === 0) {
+      Alert.alert('Empty Request', 'Please add at least one item');
       return;
     }
 
@@ -36,8 +64,7 @@ export default function CreateRequestScreen() {
     try {
       clearError();
       await createRequest({
-        category,
-        quantity: parseInt(quantity),
+        items,
         address: address.trim(),
         type,
       });
@@ -53,37 +80,60 @@ export default function CreateRequestScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.form}>
-        <Text style={styles.label}>Category</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-          {Object.values(Category).map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryChip,
-                category === cat && styles.categoryChipActive,
-              ]}
-              onPress={() => setCategory(cat)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  category === cat && styles.categoryTextActive,
-                ]}
-              >
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        
+        {/* CART LIST */}
+        {items.length > 0 && (
+          <View style={styles.cartContainer}>
+            <Text style={styles.label}>Items to Pickup</Text>
+            {items.map((item, idx) => (
+              <View key={idx} style={styles.cartItem}>
+                <Text style={styles.cartItemText}>{item.category} x {item.quantity}</Text>
+                <TouchableOpacity onPress={() => handleRemoveItem(idx)}>
+                  <Text style={styles.removeText}>Remove</Text>
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
 
-        <Text style={styles.label}>Quantity (number of items)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 2"
-          keyboardType="number-pad"
-          value={quantity}
-          onChangeText={setQuantity}
-        />
+        <View style={styles.addItemSection}>
+          <Text style={styles.label}>Select Electronic Item</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+            {Object.values(Category).map((cat) => (
+              <TouchableOpacity
+                key={cat}
+                style={[
+                  styles.categoryChip,
+                  currentCategory === cat && styles.categoryChipActive,
+                ]}
+                onPress={() => setCurrentCategory(cat)}
+              >
+                <Text
+                  style={[
+                    styles.categoryText,
+                    currentCategory === cat && styles.categoryTextActive,
+                  ]}
+                >
+                  {cat}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <Text style={styles.label}>Quantity</Text>
+          <View style={styles.addItemRow}>
+            <TextInput
+              style={[styles.input, styles.quantityInput]}
+              placeholder="e.g., 2"
+              keyboardType="number-pad"
+              value={currentQuantity}
+              onChangeText={setCurrentQuantity}
+            />
+            <TouchableOpacity style={styles.addButton} onPress={handleAddItem}>
+              <Text style={styles.addButtonText}>Add Item</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         <Text style={styles.label}>Pickup Address</Text>
         <TextInput
@@ -139,7 +189,7 @@ export default function CreateRequestScreen() {
           {isLoading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.submitButtonText}>Create Request</Text>
+            <Text style={styles.submitButtonText}>Submit Bulk Request</Text>
           )}
         </TouchableOpacity>
       </View>
@@ -162,21 +212,53 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
     marginBottom: 8,
   },
-  categoryScroll: {
+  cartContainer: {
+    backgroundColor: '#e8f8f5',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#1abc9c',
     marginBottom: 8,
+  },
+  cartItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#d1f2eb',
+  },
+  cartItemText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#16a085',
+  },
+  removeText: {
+    color: '#e74c3c',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  addItemSection: {
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+  },
+  categoryScroll: {
+    marginBottom: 12,
   },
   categoryChip: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginRight: 8,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fa',
     borderWidth: 1,
     borderColor: '#dee2e6',
   },
   categoryChipActive: {
-    backgroundColor: '#27ae60',
-    borderColor: '#27ae60',
+    backgroundColor: '#3498db',
+    borderColor: '#3498db',
   },
   categoryText: {
     fontSize: 14,
@@ -186,6 +268,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: '600',
   },
+  addItemRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  quantityInput: {
+    flex: 1,
+    marginBottom: 0,
+  },
   input: {
     backgroundColor: '#fff',
     borderWidth: 1,
@@ -193,6 +283,16 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
+  },
+  addButton: {
+    backgroundColor: '#3498db',
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+    borderRadius: 8,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
   textArea: {
     height: 100,

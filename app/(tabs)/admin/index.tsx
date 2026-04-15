@@ -255,12 +255,18 @@ export default function AdminHomeScreen() {
           requests.filter(r => r.status === 'CREATED' || r.status === 'SCHEDULED').map((request) => (
             <View key={request._id} style={styles.requestCard}>
               <View style={styles.requestHeader}>
-                <Text style={styles.requestCategory}>{request.category}</Text>
+                <Text style={styles.requestCategory}>
+                  {request.items && request.items.length > 1 
+                    ? `Multiple Items (${request.items.length})` 
+                    : request.items && request.items[0]?.category}
+                </Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
                   <Text style={styles.statusText}>{request.status}</Text>
                 </View>
               </View>
-              <Text style={styles.requestDetail}>Quantity: {request.quantity} items</Text>
+              <Text style={styles.requestDetail}>
+                Items: {request.items?.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
+              </Text>
               <Text style={styles.requestDetail}>Customer: {request.userId?.name || 'N/A'}</Text>
               <Text style={styles.requestDetail}>Phone: {request.userId?.phone || 'N/A'}</Text>
               <Text style={styles.requestDetail}>Address: {request.address}</Text>
@@ -329,7 +335,11 @@ export default function AdminHomeScreen() {
             <Text style={styles.modalTitle}>Assign Vendor</Text>
             {selectedRequest && (
               <>
-                <Text style={styles.modalLabel}>Request: {selectedRequest.category}</Text>
+                <Text style={styles.modalLabel}>
+                  Request: {selectedRequest.items && selectedRequest.items.length > 1 
+                    ? `Multiple Items (${selectedRequest.items.length})` 
+                    : selectedRequest.items && selectedRequest.items[0]?.category}
+                </Text>
                 <Text style={styles.modalLabel}>Customer: {selectedRequest.userId?.name}</Text>
               </>
             )}

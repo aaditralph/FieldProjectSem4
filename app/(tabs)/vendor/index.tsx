@@ -20,9 +20,8 @@ export default function VendorHomeScreen() {
   const [selectedPickup, setSelectedPickup] = useState<any>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [otp, setOtp] = useState('');
-  const [weight, setWeight] = useState('');
+  const [evaluations, setEvaluations] = useState<Record<string, { weight: string; condition: Condition }>>({});
   const [finalPrice, setFinalPrice] = useState('');
-  const [condition, setCondition] = useState<Condition>(Condition.WORKING);
 
   // Cast store pickups to the correct type (backend returns Request objects)
   const pickups = storePickups as any[];
@@ -68,18 +67,27 @@ export default function VendorHomeScreen() {
   const handleCompletePickup = async () => {
     if (!selectedPickup) return;
 
-    if (!otp || !weight) {
-      Alert.alert('Missing Info', 'Please fill in all fields');
-      return;
+    // Validate evaluations
+    const items = selectedPickup.items || selectedPickup.request?.items || [];
+    for (const item of items) {
+      if (!evaluations[item.category] || !evaluations[item.category].weight) {
+        Alert.alert('Missing Info', `Please enter weight for ${item.category}`);
+        return;
+      }
     }
 
     try {
       const pickupId = selectedPickup._id || selectedPickup.id;
       
+      const evaluatedItems = items.map((item: any) => ({
+        category: item.category,
+        weight: parseFloat(evaluations[item.category].weight),
+        condition: evaluations[item.category].condition,
+      }));
+
       const payload: any = {
         otp,
-        weight: parseFloat(weight),
-        condition,
+        evaluatedItems,
       };
 
       if (finalPrice && !isNaN(parseFloat(finalPrice))) {
@@ -91,7 +99,7 @@ export default function VendorHomeScreen() {
       Alert.alert('Success', 'Pickup completed successfully!');
       setModalVisible(false);
       setOtp('');
-      setWeight('');
+      setEvaluations({});
       setFinalPrice('');
     } catch (error: any) {
       Alert.alert('Error', error.message || 'Failed to complete pickup');
@@ -100,6 +108,12 @@ export default function VendorHomeScreen() {
 
   const openCompleteModal = (pickup: any) => {
     setSelectedPickup(pickup);
+    const initialEvals: any = {};
+    const items = pickup.items || pickup.request?.items || [];
+    items.forEach((item: any) => {
+      initialEvals[item.category] = { weight: '', condition: Condition.WORKING };
+    });
+    setEvaluations(initialEvals);
     setModalVisible(true);
   };
 
@@ -120,7 +134,7 @@ export default function VendorHomeScreen() {
     const request = item.request || item; // Handle both structures
     
     // Skip if request data is missing
-    if (!request || !request.category) {
+    if (!request || !request.items || request.items.length === 0) {
       return (
         <View style={styles.card}>
           <Text style={styles.emptyText}>Invalid pickup data</Text>
@@ -131,13 +145,19 @@ export default function VendorHomeScreen() {
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
-          <Text style={styles.category}>{request.category}</Text>
+          <Text style={styles.category}>
+            {request.items.length > 1 
+              ? `Multiple Items (${request.items.length})` 
+              : request.items[0]?.category}
+          </Text>
           <View style={styles.statusBadge}>
             <Text style={styles.statusText}>{request.status}</Text>
           </View>
         </View>
         <View style={styles.cardBody}>
-          <Text style={styles.detail}>Quantity: {request.quantity} items</Text>
+          <Text style={styles.detail}>
+            Items: {request.items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
+          </Text>
           <Text style={styles.detail}>Address: {request.address}</Text>
           <Text style={styles.detail}>Scheduled: {formatDate(request.scheduledTime || request.createdAt)}</Text>
           
@@ -211,14 +231,50 @@ export default function VendorHomeScreen() {
               onChangeText={setOtp}
             />
 
-            <Text style={styles.label}>Weight (kg)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter weight in kg"
-              keyboardType="decimal-pad"
-              value={weight}
-              onChangeText={setWeight}
-            />
+            <Text style={styles.label}>Evaluate Items</Text>
+            {selectedPickup && (selectedPickup.items || selectedPickup.request?.items || []).map((item: any) => (
+              <View key={item.category} style={styles.evaluationCard}>
+                <Text style={styles.evalTitle}>{item.category} (Qty: {item.quantity})</Text>
+                
+                <Text style={styles.subLabel}>Weight (kg)</Text>
+                <TextInput
+                  style={styles.evalInput}
+                  placeholder="Enter weight in kg"
+                  keyboardType="decimal-pad"
+                  value={evaluations[item.category]?.weight || ''}
+                  onChangeText={(val) => setEvaluations({
+                    ...evaluations,
+                    [item.category]: { ...evaluations[item.category], weight: val }
+                  })}
+                />
+
+                <Text style={styles.subLabel}>Condition</Text>
+                <View style={styles.conditionContainer}>
+                  {Object.values(Condition).map((cond) => (
+                    <TouchableOpacity
+                      key={cond}
+                      style={[
+                        styles.conditionButton,
+                        evaluations[item.category]?.condition === cond && styles.conditionButtonActive,
+                      ]}
+                      onPress={() => setEvaluations({
+                        ...evaluations,
+                        [item.category]: { ...evaluations[item.category], condition: cond }
+                      })}
+                    >
+                      <Text
+                        style={[
+                          styles.conditionText,
+                          evaluations[item.category]?.condition === cond && styles.conditionTextActive,
+                        ]}
+                      >
+                        {cond}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
 
             <Text style={styles.label}>Final Price Override (₹) - Optional</Text>
             <TextInput
@@ -228,29 +284,6 @@ export default function VendorHomeScreen() {
               value={finalPrice}
               onChangeText={setFinalPrice}
             />
-
-            <Text style={styles.label}>Condition</Text>
-            <View style={styles.conditionContainer}>
-              {Object.values(Condition).map((cond) => (
-                <TouchableOpacity
-                  key={cond}
-                  style={[
-                    styles.conditionButton,
-                    condition === cond && styles.conditionButtonActive,
-                  ]}
-                  onPress={() => setCondition(cond)}
-                >
-                  <Text
-                    style={[
-                      styles.conditionText,
-                      condition === cond && styles.conditionTextActive,
-                    ]}
-                  >
-                    {cond}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
 
             <View style={styles.modalButtons}>
               <TouchableOpacity
@@ -427,7 +460,37 @@ const styles = StyleSheet.create({
   conditionContainer: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 16,
+    marginTop: 8,
+    marginBottom: 8,
+  },
+  evaluationCard: {
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  evalTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    marginBottom: 8,
+  },
+  subLabel: {
+    fontSize: 12,
+    color: '#7f8c8d',
+    marginBottom: 4,
+    fontWeight: '600',
+  },
+  evalInput: {
+    backgroundColor: '#f8f9fa',
+    borderWidth: 1,
+    borderColor: '#dee2e6',
+    borderRadius: 8,
+    padding: 10,
+    fontSize: 14,
+    marginBottom: 12,
   },
   conditionButton: {
     flex: 1,

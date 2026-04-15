@@ -11,11 +11,15 @@ export interface User {
   address: string;
 }
 
+export interface RequestItem {
+  category: Category;
+  quantity: number;
+}
+
 export interface Request {
   id: string;
   userId: string;
-  category: Category;
-  quantity: number;
+  items: RequestItem[];
   address: string;
   status: RequestStatus;
   scheduledTime?: string;
@@ -26,12 +30,17 @@ export interface Request {
   otp?: string;
 }
 
+export interface EvaluatedItem {
+  category: Category;
+  weight: number;
+  condition: Condition;
+}
+
 export interface Pickup {
   id: string;
   requestId: string;
   otp: string;
-  weight: number;
-  condition: Condition;
+  evaluatedItems: EvaluatedItem[];
   completedAt?: string;
   finalPrice?: number;
 }
@@ -85,8 +94,7 @@ export interface LoginRequest {
 }
 
 export interface CreateRequestPayload {
-  category: Category;
-  quantity: number;
+  items: { category: Category; quantity: number }[];
   address: string;
   imageUrls?: string[];
   type: 'HOME_PICKUP' | 'DRIVE';
@@ -101,8 +109,7 @@ export interface SchedulePayload {
 
 export interface CompletePickupPayload {
   otp: string;
-  weight: number;
-  condition: Condition;
+  evaluatedItems: { category: Category; weight: number; condition: Condition }[];
   finalPrice?: number;
 }
 
