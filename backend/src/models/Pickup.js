@@ -27,6 +27,13 @@ const pickupSchema = new mongoose.Schema({
       required: [true, 'Condition is required'],
     },
   }],
+  // Legacy single-item fields
+  weight: {
+    type: Number,
+  },
+  condition: {
+    type: String,
+  },
   finalPrice: {
     type: Number,
     required: true,

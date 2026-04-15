@@ -74,7 +74,12 @@ export default function CitizenHomeScreen() {
   const renderRequest = ({ item }: { item: Request }) => {
     // Handle both _id (from backend) and id (from mock)
     const itemId = (item as any)._id || item.id;
+    const items = (item.items && item.items.length > 0) 
+      ? item.items 
+      : (item.category ? [{ category: item.category, quantity: item.quantity }] : []);
     
+    if (items.length === 0) return null;
+
     return (
       <TouchableOpacity
         style={styles.card}
@@ -82,9 +87,9 @@ export default function CitizenHomeScreen() {
       >
         <View style={styles.cardHeader}>
           <Text style={styles.category}>
-            {item.items && item.items.length > 1 
-              ? `Multiple Items (${item.items.length})` 
-              : item.items && item.items[0]?.category}
+            {items.length > 1 
+              ? `Multiple Items (${items.length})` 
+              : items[0]?.category}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
             <Text style={styles.statusText}>{item.status}</Text>
@@ -92,7 +97,7 @@ export default function CitizenHomeScreen() {
         </View>
         <View style={styles.cardBody}>
           <Text style={styles.detail}>
-            Items: {item.items?.map(i => `${i.category} x${i.quantity}`).join(', ')}
+            Items: {items.map(i => `${i.category} x${i.quantity}`).join(', ')}
           </Text>
           <Text style={styles.detail}>Address: {item.address}</Text>
           <Text style={styles.detail}>Created: {formatDate(item.createdAt)}</Text>

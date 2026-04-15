@@ -294,4 +294,5 @@ module.exports = {
   getRequestById,
   scheduleRequest,
   cancelRequest,
+  uploadRequestImage,
 };

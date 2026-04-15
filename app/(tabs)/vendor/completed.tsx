@@ -29,16 +29,19 @@ export default function CompletedScreen() {
 
   const renderPickup = ({ item }: { item: any }) => {
     const request = item.request || item;
+    const items = (request.items && request.items.length > 0) 
+      ? request.items 
+      : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
     
-    if (!request || !request.category) return null;
+    if (!request || items.length === 0) return null;
     
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.category}>
-            {request.items && request.items.length > 1 
-              ? `Multiple Items (${request.items.length})` 
-              : request.items && request.items[0]?.category}
+            {items.length > 1 
+              ? `Multiple Items (${items.length})` 
+              : items[0]?.category}
           </Text>
           <View style={styles.statusBadge}>
             <Text style={styles.statusText}>{request.status}</Text>
@@ -46,7 +49,7 @@ export default function CompletedScreen() {
         </View>
         <View style={styles.cardBody}>
           <Text style={styles.detail}>
-            Items: {request.items?.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
+            Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
           </Text>
           <Text style={styles.detail}>Address: {request.address}</Text>
           <Text style={styles.detail}>Scheduled: {formatDate(request.scheduledTime || request.createdAt)}</Text>

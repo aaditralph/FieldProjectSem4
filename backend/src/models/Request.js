@@ -26,6 +26,13 @@ const requestSchema = new mongoose.Schema({
       min: [1, 'Quantity must be at least 1'],
     }
   }],
+  // Legacy fields for backward compatibility
+  category: {
+    type: String,
+  },
+  quantity: {
+    type: Number,
+  },
   address: {
     type: String,
     required: [true, 'Address is required'],

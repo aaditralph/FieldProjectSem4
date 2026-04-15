@@ -65,20 +65,26 @@ export default function CompletedAssignmentsScreen() {
         {completedRequests.length === 0 ? (
           <Text style={styles.emptyText}>No completed requests</Text>
         ) : (
-          completedRequests.map((request) => (
+          completedRequests.map((request) => {
+            const items = (request.items && request.items.length > 0) 
+              ? request.items 
+              : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
+            if (items.length === 0) return null;
+            
+            return (
             <View key={request._id} style={styles.requestCard}>
               <View style={styles.requestHeader}>
                 <Text style={styles.requestCategory}>
-                  {request.items && request.items.length > 1 
-                    ? `Multiple Items (${request.items.length})` 
-                    : request.items && request.items[0]?.category}
+                  {items.length > 1 
+                    ? `Multiple Items (${items.length})` 
+                    : items[0]?.category}
                 </Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
                   <Text style={styles.statusText}>{request.status}</Text>
                 </View>
               </View>
               <Text style={styles.requestDetail}>
-                Items: {request.items?.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
+                Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
               </Text>
               <Text style={styles.requestDetail}>Customer: {request.userId?.name || 'N/A'}</Text>
               <Text style={styles.requestDetail}>Final Price: ₹{request.finalPrice || 0}</Text>
@@ -86,7 +92,7 @@ export default function CompletedAssignmentsScreen() {
                 <Text style={styles.vendorText}>Completed By: {request.assignedVendorId?.name || 'Unknown'}</Text>
               </View>
             </View>
-          ))
+          )})
         )}
       </View>
     </ScrollView>

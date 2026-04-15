@@ -252,20 +252,26 @@ export default function AdminHomeScreen() {
         ) : requests.filter(r => r.status === 'CREATED' || r.status === 'SCHEDULED').length === 0 ? (
           <Text style={styles.emptyText}>No pending requests</Text>
         ) : (
-          requests.filter(r => r.status === 'CREATED' || r.status === 'SCHEDULED').map((request) => (
+          requests.filter(r => r.status === 'CREATED' || r.status === 'SCHEDULED').map((request) => {
+            const items = (request.items && request.items.length > 0) 
+              ? request.items 
+              : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
+            if (items.length === 0) return null;
+
+            return (
             <View key={request._id} style={styles.requestCard}>
               <View style={styles.requestHeader}>
                 <Text style={styles.requestCategory}>
-                  {request.items && request.items.length > 1 
-                    ? `Multiple Items (${request.items.length})` 
-                    : request.items && request.items[0]?.category}
+                  {items.length > 1 
+                    ? `Multiple Items (${items.length})` 
+                    : items[0]?.category}
                 </Text>
                 <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
                   <Text style={styles.statusText}>{request.status}</Text>
                 </View>
               </View>
               <Text style={styles.requestDetail}>
-                Items: {request.items?.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
+                Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
               </Text>
               <Text style={styles.requestDetail}>Customer: {request.userId?.name || 'N/A'}</Text>
               <Text style={styles.requestDetail}>Phone: {request.userId?.phone || 'N/A'}</Text>
@@ -283,7 +289,7 @@ export default function AdminHomeScreen() {
                 </TouchableOpacity>
               )}
             </View>
-          ))
+          )})
         )}
       </View>
 
@@ -336,9 +342,14 @@ export default function AdminHomeScreen() {
             {selectedRequest && (
               <>
                 <Text style={styles.modalLabel}>
-                  Request: {selectedRequest.items && selectedRequest.items.length > 1 
-                    ? `Multiple Items (${selectedRequest.items.length})` 
-                    : selectedRequest.items && selectedRequest.items[0]?.category}
+                  Request: {(() => {
+                    const reqItems = (selectedRequest.items && selectedRequest.items.length > 0)
+                      ? selectedRequest.items 
+                      : (selectedRequest.category ? [{ category: selectedRequest.category }] : []);
+                    return reqItems.length > 1 
+                    ? `Multiple Items (${reqItems.length})` 
+                    : reqItems[0]?.category || 'Unknown';
+                  })()}
                 </Text>
                 <Text style={styles.modalLabel}>Customer: {selectedRequest.userId?.name}</Text>
               </>

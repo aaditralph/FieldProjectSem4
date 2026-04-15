@@ -132,9 +132,12 @@ export default function VendorHomeScreen() {
     // Backend returns Request objects directly, not PickupWithRequest
     const itemId = item._id || item.id;
     const request = item.request || item; // Handle both structures
+    const items = (request.items && request.items.length > 0) 
+      ? request.items 
+      : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
     
     // Skip if request data is missing
-    if (!request || !request.items || request.items.length === 0) {
+    if (!request || items.length === 0) {
       return (
         <View style={styles.card}>
           <Text style={styles.emptyText}>Invalid pickup data</Text>
@@ -146,9 +149,9 @@ export default function VendorHomeScreen() {
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.category}>
-            {request.items.length > 1 
-              ? `Multiple Items (${request.items.length})` 
-              : request.items[0]?.category}
+            {items.length > 1 
+              ? `Multiple Items (${items.length})` 
+              : items[0]?.category}
           </Text>
           <View style={styles.statusBadge}>
             <Text style={styles.statusText}>{request.status}</Text>
@@ -156,7 +159,7 @@ export default function VendorHomeScreen() {
         </View>
         <View style={styles.cardBody}>
           <Text style={styles.detail}>
-            Items: {request.items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
+            Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
           </Text>
           <Text style={styles.detail}>Address: {request.address}</Text>
           <Text style={styles.detail}>Scheduled: {formatDate(request.scheduledTime || request.createdAt)}</Text>

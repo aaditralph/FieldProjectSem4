@@ -45,6 +45,8 @@ const acceptPickup = async (req, res) => {
     request.otp = generateOTP();
     await request.save();
 
+    console.log(`\n📦 STARTING PICKUP - OTP TO GIVE VENDOR: ${request.otp}\n`);
+
     // Log action
     await AuditLog.create({
       action: 'pickup_accepted',
@@ -143,6 +145,7 @@ const completePickup = async (req, res) => {
 
     // Verify OTP
     if (request.otp !== otp) {
+      console.log(`❌ completePickup failed: Invalid OTP (Expected: ${request.otp}, Got: ${otp})`);
       return res.status(400).json({ message: 'Invalid OTP' });
     }
 
