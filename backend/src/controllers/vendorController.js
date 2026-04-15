@@ -3,7 +3,7 @@ const Pickup = require('../models/Pickup');
 const Transaction = require('../models/Transaction');
 const AuditLog = require('../models/AuditLog');
 const PricingConfig = require('../models/PricingConfig');
-const { calculatePrice } = require('../utils/helpers');
+const { calculatePrice, generateOTP } = require('../utils/helpers');
 
 // @desc    Get all pickups for vendor
 // @route   GET /vendor/pickups
@@ -40,8 +40,9 @@ const acceptPickup = async (req, res) => {
       return res.status(403).json({ message: 'Not authorized' });
     }
 
-    // Update status
+    // Update status and generate OTP
     request.status = 'IN_PROGRESS';
+    request.otp = generateOTP();
     await request.save();
 
     // Log action

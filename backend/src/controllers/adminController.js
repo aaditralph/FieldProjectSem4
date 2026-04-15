@@ -1,6 +1,7 @@
 const Request = require('../models/Request');
 const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
+const { generateOTP } = require('../utils/helpers');
 
 // @desc    Get all vendors
 // @route   GET /admin/vendors
@@ -43,9 +44,10 @@ const assignVendor = async (req, res) => {
       });
     }
 
-    // Assign vendor and update status
+    // Assign vendor, update status, and generate OTP
     request.assignedVendorId = vendorId;
     request.status = 'IN_PROGRESS';
+    request.otp = generateOTP();
     await request.save();
 
     // Log action

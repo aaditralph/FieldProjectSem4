@@ -110,7 +110,6 @@ const scheduleRequest = async (req, res) => {
     // Update request
     request.status = 'SCHEDULED';
     request.scheduledTime = new Date(`${date}T${timeSlot}`);
-    request.otp = generateOTP();
     request.assignedVendorId = process.env.DEFAULT_VENDOR_ID; // Assign to single vendor
 
     await request.save();

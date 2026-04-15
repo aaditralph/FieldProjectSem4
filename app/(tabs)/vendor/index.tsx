@@ -131,7 +131,6 @@ export default function VendorHomeScreen() {
           <Text style={styles.detail}>Quantity: {request.quantity} items</Text>
           <Text style={styles.detail}>Address: {request.address}</Text>
           <Text style={styles.detail}>Scheduled: {formatDate(request.scheduledTime || request.createdAt)}</Text>
-          {request.otp && <Text style={styles.detail}>OTP: {request.otp}</Text>}
           
           {request.status === 'COMPLETED' || item.completedAt ? (
             <View style={styles.completedBadge}>
@@ -139,7 +138,7 @@ export default function VendorHomeScreen() {
             </View>
           ) : (
             <>
-              {request.status === 'IN_PROGRESS' && (
+              {request.status === 'SCHEDULED' && (
                 <TouchableOpacity
                   style={styles.acceptButton}
                   onPress={() => handleAcceptPickup(itemId)}
@@ -148,12 +147,14 @@ export default function VendorHomeScreen() {
                 </TouchableOpacity>
               )}
               
-              <TouchableOpacity
-                style={styles.completeButton}
-                onPress={() => openCompleteModal({ ...item, request })}
-              >
-                <Text style={styles.completeButtonText}>Complete Pickup</Text>
-              </TouchableOpacity>
+              {request.status === 'IN_PROGRESS' && (
+                <TouchableOpacity
+                  style={styles.completeButton}
+                  onPress={() => openCompleteModal({ ...item, request })}
+                >
+                  <Text style={styles.completeButtonText}>Complete Pickup</Text>
+                </TouchableOpacity>
+              )}
             </>
           )}
         </View>

@@ -103,11 +103,20 @@ export default function CitizenHomeScreen() {
               <Text style={styles.vendorName}>
                 {(item as any).assignedVendorId.name || 'Vendor'}
               </Text>
-              {(item as any).assignedVendorId.phone && (
+              {!!(item as any).assignedVendorId.phone && (
                 <Text style={styles.vendorPhone}>
                   📞 {(item as any).assignedVendorId.phone}
                 </Text>
               )}
+            </View>
+          )}
+
+          {/* Show OTP only for strictly IN_PROGRESS requests */}
+          {item.status === RequestStatus.IN_PROGRESS && !!item.otp && (
+            <View style={styles.otpCard}>
+              <Text style={styles.otpLabel}>🔑 Verification OTP</Text>
+              <Text style={styles.otpValue}>{item.otp}</Text>
+              <Text style={styles.otpHelper}>Share with vendor to complete pickup</Text>
             </View>
           )}
         </View>
@@ -256,5 +265,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#7f8c8d',
     marginTop: 8,
+  },
+  otpCard: {
+    backgroundColor: '#fff3e0',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 10,
+    borderWidth: 1,
+    borderColor: '#ffb74d',
+    alignItems: 'center',
+  },
+  otpLabel: {
+    fontSize: 12,
+    color: '#e65100',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  otpValue: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#e65100',
+    letterSpacing: 4,
+  },
+  otpHelper: {
+    fontSize: 11,
+    color: '#f57c00',
+    marginTop: 4,
   },
 });

@@ -43,7 +43,8 @@ export default function LoginScreen() {
         );
       }
     } catch (err: any) {
-      Alert.alert('Error', err || 'Failed to send OTP');
+      const errorMsg = typeof err === 'string' ? err : (err?.message || 'Failed to send OTP');
+      Alert.alert('Error', errorMsg);
     }
   };
 

@@ -13,7 +13,12 @@ import {
 
 export default function AdminHomeScreen() {
   const { isLoading, fetchStats } = useAdminStore();
-  const [stats, setStats] = useState<any>(null);
+  const [stats, setStats] = useState<any>({
+    totalRequests: 0,
+    completedRequests: 0,
+    pendingRequests: 0,
+    totalAmount: 0,
+  });
   const [requests, setRequests] = useState<any[]>([]);
   const [vendors, setVendors] = useState<any[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(true);
@@ -32,13 +37,14 @@ export default function AdminHomeScreen() {
         loadRequests(),
         loadVendors(),
       ]);
-      
-      // Calculate stats from requests
-      calculateStats();
     } catch (error) {
       console.error('Failed to load dashboard:', error);
     }
   };
+
+  useEffect(() => {
+    calculateStats();
+  }, [requests]);
 
   const calculateStats = () => {
     const totalRequests = requests.length;
@@ -72,9 +78,6 @@ export default function AdminHomeScreen() {
       
       const data = await response.json();
       setRequests(data);
-      
-      // Calculate stats after loading requests
-      setTimeout(() => calculateStats(), 0);
     } catch (error) {
       console.error('Failed to load requests:', error);
       setRequests([]);
