@@ -76,7 +76,7 @@ export default function CitizenHomeScreen() {
     const itemId = (item as any)._id || item.id;
     const items = (item.items && item.items.length > 0) 
       ? item.items 
-      : (item.category ? [{ category: item.category, quantity: item.quantity }] : []);
+      : ((item as any).category ? [{ category: (item as any).category, quantity: (item as any).quantity }] : []);
     
     if (items.length === 0) return null;
 

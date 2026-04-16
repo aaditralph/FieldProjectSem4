@@ -2,15 +2,16 @@ import { useVendorStore } from '@/src/store/vendorStore';
 import { Condition, Pickup, Request } from '@/src/types';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 type PickupWithRequest = Pickup & { request: Request };
@@ -22,12 +23,25 @@ export default function VendorHomeScreen() {
   const [otp, setOtp] = useState('');
   const [evaluations, setEvaluations] = useState<Record<string, { weight: string; condition: Condition }>>({});
   const [finalPrice, setFinalPrice] = useState('');
+  const [refreshing, setRefreshing] = useState(false);
 
   // Cast store pickups to the correct type (backend returns Request objects)
   const pickups = storePickups as any[];
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchPickups();
+    setRefreshing(false);
+  }, []);
+
   useEffect(() => {
     fetchPickups();
+
+    const interval = setInterval(() => {
+      fetchPickups(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
   const handleAcceptPickup = async (pickupId: string) => {
@@ -41,18 +55,18 @@ export default function VendorHomeScreen() {
           onPress: async () => {
             try {
               const token = await require('expo-secure-store').getItemAsync('auth_token');
-              const response = await fetch(`http://192.168.1.45:5000/api/vendor/pickups/${pickupId}/accept`, {
+              const response = await fetch(`http://10.229.73.52:5000/api/vendor/pickups/${pickupId}/accept`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,
                 },
               });
-              
+
               if (!response.ok) {
                 const error = await response.json();
                 throw new Error(error.message);
               }
-              
+
               Alert.alert('Success', 'Pickup accepted!');
               fetchPickups();
             } catch (error: any) {
@@ -78,7 +92,7 @@ export default function VendorHomeScreen() {
 
     try {
       const pickupId = selectedPickup._id || selectedPickup.id;
-      
+
       const evaluatedItems = items.map((item: any) => ({
         category: item.category,
         weight: parseFloat(evaluations[item.category].weight),
@@ -132,10 +146,10 @@ export default function VendorHomeScreen() {
     // Backend returns Request objects directly, not PickupWithRequest
     const itemId = item._id || item.id;
     const request = item.request || item; // Handle both structures
-    const items = (request.items && request.items.length > 0) 
-      ? request.items 
+    const items = (request.items && request.items.length > 0)
+      ? request.items
       : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
-    
+
     // Skip if request data is missing
     if (!request || items.length === 0) {
       return (
@@ -144,13 +158,13 @@ export default function VendorHomeScreen() {
         </View>
       );
     }
-    
+
     return (
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.category}>
-            {items.length > 1 
-              ? `Multiple Items (${items.length})` 
+            {items.length > 1
+              ? `Multiple Items (${items.length})`
               : items[0]?.category}
           </Text>
           <View style={styles.statusBadge}>
@@ -163,7 +177,7 @@ export default function VendorHomeScreen() {
           </Text>
           <Text style={styles.detail}>Address: {request.address}</Text>
           <Text style={styles.detail}>Scheduled: {formatDate(request.scheduledTime || request.createdAt)}</Text>
-          
+
           {request.status === 'COMPLETED' || item.completedAt ? (
             <View style={styles.completedBadge}>
               <Text style={styles.completedText}>✓ Completed</Text>
@@ -178,7 +192,7 @@ export default function VendorHomeScreen() {
                   <Text style={styles.acceptButtonText}>Accept Pickup</Text>
                 </TouchableOpacity>
               )}
-              
+
               {request.status === 'IN_PROGRESS' && (
                 <TouchableOpacity
                   style={styles.completeButton}
@@ -209,6 +223,9 @@ export default function VendorHomeScreen() {
         renderItem={renderPickup}
         keyExtractor={(item) => (item as any)._id || item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No pickups assigned</Text>
@@ -223,7 +240,7 @@ export default function VendorHomeScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Complete Pickup</Text>
-            
+
             <Text style={styles.label}>Customer OTP</Text>
             <TextInput
               style={styles.input}
@@ -238,7 +255,7 @@ export default function VendorHomeScreen() {
             {selectedPickup && (selectedPickup.items || selectedPickup.request?.items || []).map((item: any) => (
               <View key={item.category} style={styles.evaluationCard}>
                 <Text style={styles.evalTitle}>{item.category} (Qty: {item.quantity})</Text>
-                
+
                 <Text style={styles.subLabel}>Weight (kg)</Text>
                 <TextInput
                   style={styles.evalInput}

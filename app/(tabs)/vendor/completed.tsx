@@ -1,8 +1,9 @@
 import { useVendorStore } from '@/src/store/vendorStore';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     FlatList,
+    RefreshControl,
     StyleSheet,
     Text,
     View,
@@ -11,6 +12,13 @@ import {
 export default function CompletedScreen() {
   const { pickups: storePickups, isLoading, fetchPickups } = useVendorStore();
   const pickups = storePickups as any[];
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await fetchPickups();
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
     fetchPickups();
@@ -78,6 +86,9 @@ export default function CompletedScreen() {
         renderItem={renderPickup}
         keyExtractor={(item) => (item as any)._id || item.id}
         contentContainerStyle={styles.list}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No completed pickups</Text>

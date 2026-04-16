@@ -1,15 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    ScrollView,
-    StyleSheet,
-    Text,
-    View,
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
 } from 'react-native';
 
 export default function CompletedAssignmentsScreen() {
   const [requests, setRequests] = useState<any[]>([]);
   const [isLoadingRequests, setIsLoadingRequests] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadRequests();
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
     loadRequests();
@@ -19,16 +27,16 @@ export default function CompletedAssignmentsScreen() {
     try {
       setIsLoadingRequests(true);
       const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.1.45:5000/api/admin/requests', {
+      const response = await fetch('http://10.229.73.52:5000/api/admin/requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch requests');
       }
-      
+
       const data = await response.json();
       setRequests(data);
     } catch (error) {
@@ -55,7 +63,12 @@ export default function CompletedAssignmentsScreen() {
   const completedRequests = requests.filter(r => r.status === 'COMPLETED');
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Completed Assignments</Text>
         <Text style={styles.subtitle}>{completedRequests.length} Assignment{completedRequests.length !== 1 ? 's' : ''} Finished</Text>
@@ -66,33 +79,34 @@ export default function CompletedAssignmentsScreen() {
           <Text style={styles.emptyText}>No completed requests</Text>
         ) : (
           completedRequests.map((request) => {
-            const items = (request.items && request.items.length > 0) 
-              ? request.items 
+            const items = (request.items && request.items.length > 0)
+              ? request.items
               : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
             if (items.length === 0) return null;
-            
+
             return (
-            <View key={request._id} style={styles.requestCard}>
-              <View style={styles.requestHeader}>
-                <Text style={styles.requestCategory}>
-                  {items.length > 1 
-                    ? `Multiple Items (${items.length})` 
-                    : items[0]?.category}
+              <View key={request._id} style={styles.requestCard}>
+                <View style={styles.requestHeader}>
+                  <Text style={styles.requestCategory}>
+                    {items.length > 1
+                      ? `Multiple Items (${items.length})`
+                      : items[0]?.category}
+                  </Text>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
+                    <Text style={styles.statusText}>{request.status}</Text>
+                  </View>
+                </View>
+                <Text style={styles.requestDetail}>
+                  Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
                 </Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
-                  <Text style={styles.statusText}>{request.status}</Text>
+                <Text style={styles.requestDetail}>Customer: {request.userId?.name || 'N/A'}</Text>
+                <Text style={styles.requestDetail}>Final Price: ₹{request.finalPrice || 0}</Text>
+                <View style={styles.vendorInfo}>
+                  <Text style={styles.vendorText}>Completed By: {request.assignedVendorId?.name || 'Unknown'}</Text>
                 </View>
               </View>
-              <Text style={styles.requestDetail}>
-                Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
-              </Text>
-              <Text style={styles.requestDetail}>Customer: {request.userId?.name || 'N/A'}</Text>
-              <Text style={styles.requestDetail}>Final Price: ₹{request.finalPrice || 0}</Text>
-              <View style={styles.vendorInfo}>
-                <Text style={styles.vendorText}>Completed By: {request.assignedVendorId?.name || 'Unknown'}</Text>
-              </View>
-            </View>
-          )})
+            )
+          })
         )}
       </View>
     </ScrollView>

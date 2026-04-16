@@ -1,15 +1,16 @@
 import { useAdminStore } from '@/src/store/adminStore';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function AdminHomeScreen() {
@@ -26,20 +27,33 @@ export default function AdminHomeScreen() {
   const [assignModalVisible, setAssignModalVisible] = useState(false);
   const [selectedRequest, setSelectedRequest] = useState<any>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string>('');
-  
+
   // New vendor management state
   const [createVendorModalVisible, setCreateVendorModalVisible] = useState(false);
   const [newVendor, setNewVendor] = useState({ name: '', email: '', phone: '', password: '' });
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadDashboard();
+    setRefreshing(false);
+  }, []);
 
   useEffect(() => {
     loadDashboard();
+
+    const interval = setInterval(() => {
+      loadDashboard(true);
+    }, 5000);
+
+    return () => clearInterval(interval);
   }, []);
 
-  const loadDashboard = async () => {
+  const loadDashboard = async (silent = false) => {
     try {
       // Load requests and vendors in parallel
       await Promise.all([
-        loadRequests(),
+        loadRequests(silent),
         loadVendors(),
       ]);
     } catch (error) {
@@ -67,20 +81,20 @@ export default function AdminHomeScreen() {
     });
   };
 
-  const loadRequests = async () => {
+  const loadRequests = async (silent = false) => {
     try {
-      setIsLoadingRequests(true);
+      if (!silent) setIsLoadingRequests(true);
       const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.1.45:5000/api/admin/requests', {
+      const response = await fetch('http://10.229.73.52:5000/api/admin/requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch requests');
       }
-      
+
       const data = await response.json();
       setRequests(data);
     } catch (error) {
@@ -94,16 +108,16 @@ export default function AdminHomeScreen() {
   const loadVendors = async () => {
     try {
       const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.1.45:5000/api/admin/vendors', {
+      const response = await fetch('http://10.229.73.52:5000/api/admin/vendors', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch vendors');
       }
-      
+
       const data = await response.json();
       setVendors(data);
     } catch (error) {
@@ -119,7 +133,7 @@ export default function AdminHomeScreen() {
     }
 
     try {
-      const response = await fetch(`http://192.168.1.45:5000/api/admin/requests/${selectedRequest._id}/assign`, {
+      const response = await fetch(`http://10.229.73.52:5000/api/admin/requests/${selectedRequest._id}/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -149,7 +163,7 @@ export default function AdminHomeScreen() {
       return;
     }
     try {
-      const response = await fetch('http://192.168.1.45:5000/api/admin/vendors', {
+      const response = await fetch('http://10.229.73.52:5000/api/admin/vendors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -173,7 +187,7 @@ export default function AdminHomeScreen() {
 
   const handleToggleVendorStatus = async (vendorId: string) => {
     try {
-      const response = await fetch(`http://192.168.1.45:5000/api/admin/vendors/${vendorId}/toggle-status`, {
+      const response = await fetch(`http://10.229.73.52:5000/api/admin/vendors/${vendorId}/toggle-status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${(await require('expo-secure-store').getItemAsync('auth_token'))}`,
@@ -216,7 +230,12 @@ export default function AdminHomeScreen() {
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView 
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Admin Dashboard</Text>
         <Text style={styles.subtitle}>BMC E-Waste Management System</Text>
@@ -253,43 +272,44 @@ export default function AdminHomeScreen() {
           <Text style={styles.emptyText}>No pending requests</Text>
         ) : (
           requests.filter(r => r.status === 'CREATED' || r.status === 'SCHEDULED').map((request) => {
-            const items = (request.items && request.items.length > 0) 
-              ? request.items 
+            const items = (request.items && request.items.length > 0)
+              ? request.items
               : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
             if (items.length === 0) return null;
 
             return (
-            <View key={request._id} style={styles.requestCard}>
-              <View style={styles.requestHeader}>
-                <Text style={styles.requestCategory}>
-                  {items.length > 1 
-                    ? `Multiple Items (${items.length})` 
-                    : items[0]?.category}
+              <View key={request._id} style={styles.requestCard}>
+                <View style={styles.requestHeader}>
+                  <Text style={styles.requestCategory}>
+                    {items.length > 1
+                      ? `Multiple Items (${items.length})`
+                      : items[0]?.category}
+                  </Text>
+                  <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
+                    <Text style={styles.statusText}>{request.status}</Text>
+                  </View>
+                </View>
+                <Text style={styles.requestDetail}>
+                  Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
                 </Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
-                  <Text style={styles.statusText}>{request.status}</Text>
-                </View>
+                <Text style={styles.requestDetail}>Customer: {request.userId?.name || 'N/A'}</Text>
+                <Text style={styles.requestDetail}>Phone: {request.userId?.phone || 'N/A'}</Text>
+                <Text style={styles.requestDetail}>Address: {request.address}</Text>
+                {request.assignedVendorId ? (
+                  <View style={styles.vendorInfo}>
+                    <Text style={styles.vendorText}>Assigned: {request.assignedVendorId.name}</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.assignButton}
+                    onPress={() => openAssignModal(request)}
+                  >
+                    <Text style={styles.assignButtonText}>Assign Vendor</Text>
+                  </TouchableOpacity>
+                )}
               </View>
-              <Text style={styles.requestDetail}>
-                Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
-              </Text>
-              <Text style={styles.requestDetail}>Customer: {request.userId?.name || 'N/A'}</Text>
-              <Text style={styles.requestDetail}>Phone: {request.userId?.phone || 'N/A'}</Text>
-              <Text style={styles.requestDetail}>Address: {request.address}</Text>
-              {request.assignedVendorId ? (
-                <View style={styles.vendorInfo}>
-                  <Text style={styles.vendorText}>Assigned: {request.assignedVendorId.name}</Text>
-                </View>
-              ) : (
-                <TouchableOpacity
-                  style={styles.assignButton}
-                  onPress={() => openAssignModal(request)}
-                >
-                  <Text style={styles.assignButtonText}>Assign Vendor</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-          )})
+            )
+          })
         )}
       </View>
 
@@ -344,11 +364,11 @@ export default function AdminHomeScreen() {
                 <Text style={styles.modalLabel}>
                   Request: {(() => {
                     const reqItems = (selectedRequest.items && selectedRequest.items.length > 0)
-                      ? selectedRequest.items 
+                      ? selectedRequest.items
                       : (selectedRequest.category ? [{ category: selectedRequest.category }] : []);
-                    return reqItems.length > 1 
-                    ? `Multiple Items (${reqItems.length})` 
-                    : reqItems[0]?.category || 'Unknown';
+                    return reqItems.length > 1
+                      ? `Multiple Items (${reqItems.length})`
+                      : reqItems[0]?.category || 'Unknown';
                   })()}
                 </Text>
                 <Text style={styles.modalLabel}>Customer: {selectedRequest.userId?.name}</Text>
@@ -400,18 +420,18 @@ export default function AdminHomeScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Create New Vendor</Text>
-            
+
             <Text style={styles.label}>Name *</Text>
-            <TextInput style={styles.input} value={newVendor.name} onChangeText={t => setNewVendor({...newVendor, name: t})} />
+            <TextInput style={styles.input} value={newVendor.name} onChangeText={t => setNewVendor({ ...newVendor, name: t })} />
 
             <Text style={styles.label}>Phone *</Text>
-            <TextInput style={styles.input} value={newVendor.phone} keyboardType="phone-pad" onChangeText={t => setNewVendor({...newVendor, phone: t})} />
+            <TextInput style={styles.input} value={newVendor.phone} keyboardType="phone-pad" onChangeText={t => setNewVendor({ ...newVendor, phone: t })} />
 
             <Text style={styles.label}>Email (optional)</Text>
-            <TextInput style={styles.input} value={newVendor.email} keyboardType="email-address" onChangeText={t => setNewVendor({...newVendor, email: t})} />
+            <TextInput style={styles.input} value={newVendor.email} keyboardType="email-address" onChangeText={t => setNewVendor({ ...newVendor, email: t })} />
 
             <Text style={styles.label}>Password *</Text>
-            <TextInput style={styles.input} value={newVendor.password} secureTextEntry onChangeText={t => setNewVendor({...newVendor, password: t})} />
+            <TextInput style={styles.input} value={newVendor.password} secureTextEntry onChangeText={t => setNewVendor({ ...newVendor, password: t })} />
 
             <View style={styles.modalButtons}>
               <TouchableOpacity style={[styles.modalButton, styles.cancelButton]} onPress={() => setCreateVendorModalVisible(false)}>

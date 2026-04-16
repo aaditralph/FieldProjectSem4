@@ -10,7 +10,7 @@ interface VendorState {
   isLoading: boolean;
   error: string | null;
   
-  fetchPickups: () => Promise<void>;
+  fetchPickups: (silent?: boolean) => Promise<void>;
   fetchPickupById: (id: string) => Promise<void>;
   completePickup: (id: string, data: CompletePickupPayload) => Promise<void>;
   clearError: () => void;
@@ -26,9 +26,9 @@ export const useVendorStore = create<VendorState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  fetchPickups: async () => {
+  fetchPickups: async (silent = false) => {
     try {
-      set({ isLoading: true, error: null });
+      if (!silent) set({ isLoading: true, error: null });
       let response;
       
       if (USE_MOCK) {

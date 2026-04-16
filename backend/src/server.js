@@ -50,8 +50,8 @@ app.use('/uploads', express.static('uploads'));
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
+  res.json({
+    status: 'OK',
     message: 'E-waste management system API is running',
     timestamp: new Date().toISOString(),
   });
@@ -76,7 +76,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Local: http://localhost:${PORT}/api`);
-  console.log(`🌐 Network: http://192.168.1.45:${PORT}/api`);
+  console.log(`🌐 Network: http://10.229.73.52:${PORT}/api`);
   console.log(`📱 Use the Network URL in your React Native app .env file`);
 });
 

@@ -45,7 +45,7 @@ If you want to test with the **real backend**, follow these steps:
 ip addr show | grep "inet " | grep -v 127.0.0.1
 ```
 
-Look for something like: `192.168.1.45` or `10.0.0.5`
+Look for something like: `10.229.73.52` or `10.0.0.5`
 
 ### Step 2: Update Frontend .env
 
@@ -53,7 +53,7 @@ Edit `/home/infirio/Documents/ewaste/.env`:
 
 ```env
 # Replace with YOUR computer's IP address
-EXPO_PUBLIC_API_URL=http://192.168.1.45:5000/api
+EXPO_PUBLIC_API_URL=http://10.229.73.52:5000/api
 
 EXPO_PUBLIC_USE_MOCK=false
 ```
