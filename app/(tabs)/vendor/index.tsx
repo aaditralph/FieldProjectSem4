@@ -55,7 +55,7 @@ export default function VendorHomeScreen() {
           onPress: async () => {
             try {
               const token = await require('expo-secure-store').getItemAsync('auth_token');
-              const response = await fetch(`http://10.229.73.52:5000/api/vendor/pickups/${pickupId}/accept`, {
+              const response = await fetch(`http://192.168.137.66:5000/api/vendor/pickups/${pickupId}/accept`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,

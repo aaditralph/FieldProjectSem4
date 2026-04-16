@@ -159,10 +159,68 @@ const toggleVendorStatus = async (req, res) => {
   }
 };
 
+// @desc    Get Admin Dashboard Analytics
+// @route   GET /admin/dashboard-analytics
+// @access  Private (Admin)
+const getDashboardAnalytics = async (req, res) => {
+  try {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const categoryStats = await Request.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo } } },
+      { $unwind: { path: "$items", preserveNullAndEmptyArrays: true } },
+      { $group: {
+          _id: { $ifNull: ["$items.category", "$category"] },
+          count: { $sum: 1 } 
+      }},
+      { $match: { _id: { $ne: null } } },
+      { $project: { _id: 0, category: "$_id", count: 1 } }
+    ]);
+
+    const trendStats = await Request.aggregate([
+      { $match: { createdAt: { $gte: sevenDaysAgo } } },
+      { $group: {
+          _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+          count: { $sum: 1 }
+      }},
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, date: "$_id", count: 1 } }
+    ]);
+
+    const statusAgg = await Request.aggregate([
+      { $group: { _id: "$status", count: { $sum: 1 } } }
+    ]);
+    
+    let statusStats = { pending: 0, assigned: 0, completed: 0 };
+    statusAgg.forEach(s => {
+      if (['CREATED', 'SCHEDULED'].includes(s._id)) statusStats.pending += s.count;
+      else if (s._id === 'IN_PROGRESS') statusStats.assigned += s.count;
+      else if (s._id === 'COMPLETED') statusStats.completed += s.count;
+    });
+
+    const totalRequests = await Request.countDocuments();
+    const completedRequests = statusStats.completed;
+    const completionRate = totalRequests === 0 ? 0 : Math.round((completedRequests / totalRequests) * 100);
+
+    res.json({
+      categoryStats,
+      trendStats,
+      statusStats,
+      totalRequests,
+      completionRate
+    });
+  } catch (error) {
+    console.error('Dashboard analytics error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   getVendors,
   assignVendor,
   getAllRequests,
   createVendor,
   toggleVendorStatus,
+  getDashboardAnalytics,
 };

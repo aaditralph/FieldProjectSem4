@@ -27,7 +27,7 @@ export default function CompletedAssignmentsScreen() {
     try {
       setIsLoadingRequests(true);
       const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://10.229.73.52:5000/api/admin/requests', {
+      const response = await fetch('http://192.168.137.66:5000/api/admin/requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -63,7 +63,7 @@ export default function CompletedAssignmentsScreen() {
   const completedRequests = requests.filter(r => r.status === 'COMPLETED');
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />

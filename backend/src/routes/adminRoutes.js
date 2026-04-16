@@ -7,6 +7,7 @@ const {
   getAllRequests,
   createVendor,
   toggleVendorStatus,
+  getDashboardAnalytics,
 } = require('../controllers/adminController');
 
 // All routes require admin role
@@ -19,5 +20,6 @@ router.post('/vendors', createVendor);
 router.put('/vendors/:id/toggle-status', toggleVendorStatus);
 router.get('/requests', getAllRequests);
 router.post('/requests/:id/assign', assignVendor);
+router.get('/dashboard-analytics', getDashboardAnalytics);
 
 module.exports = router;

@@ -85,7 +85,7 @@ export default function AdminHomeScreen() {
     try {
       if (!silent) setIsLoadingRequests(true);
       const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://10.229.73.52:5000/api/admin/requests', {
+      const response = await fetch('http://192.168.137.66:5000/api/admin/requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -108,7 +108,7 @@ export default function AdminHomeScreen() {
   const loadVendors = async () => {
     try {
       const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://10.229.73.52:5000/api/admin/vendors', {
+      const response = await fetch('http://192.168.137.66:5000/api/admin/vendors', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -133,7 +133,7 @@ export default function AdminHomeScreen() {
     }
 
     try {
-      const response = await fetch(`http://10.229.73.52:5000/api/admin/requests/${selectedRequest._id}/assign`, {
+      const response = await fetch(`http://192.168.137.66:5000/api/admin/requests/${selectedRequest._id}/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -163,7 +163,7 @@ export default function AdminHomeScreen() {
       return;
     }
     try {
-      const response = await fetch('http://10.229.73.52:5000/api/admin/vendors', {
+      const response = await fetch('http://192.168.137.66:5000/api/admin/vendors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -187,7 +187,7 @@ export default function AdminHomeScreen() {
 
   const handleToggleVendorStatus = async (vendorId: string) => {
     try {
-      const response = await fetch(`http://10.229.73.52:5000/api/admin/vendors/${vendorId}/toggle-status`, {
+      const response = await fetch(`http://192.168.137.66:5000/api/admin/vendors/${vendorId}/toggle-status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${(await require('expo-secure-store').getItemAsync('auth_token'))}`,
@@ -230,7 +230,7 @@ export default function AdminHomeScreen() {
   }
 
   return (
-    <ScrollView 
+    <ScrollView
       style={styles.container}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
