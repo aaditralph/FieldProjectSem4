@@ -21,6 +21,8 @@ export interface Request {
   userId: string;
   items: RequestItem[];
   address: string;
+  type?: 'HOME_PICKUP' | 'DRIVE';
+  driveId?: string;
   status: RequestStatus;
   scheduledTime?: string;
   imageUrls?: string[];
@@ -60,6 +62,7 @@ export interface Drive {
   date: string;
   capacity: number;
   registeredCount: number;
+  registeredUsers?: string[];
   createdAt: string;
 }
 
@@ -90,6 +93,14 @@ export interface AuthResponse {
 
 export interface LoginRequest {
   phone: string;
+  password?: string; // Optional for backwards compatibility during transition, but will be required in UI
+}
+
+export interface SignupRequest {
+  name: string;
+  phone: string;
+  password?: string;
+  address: string;
   otp: string;
 }
 

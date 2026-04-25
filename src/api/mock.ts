@@ -44,9 +44,9 @@ const mockRequests: Request[] = [
   {
     id: 'req1',
     userId: '1',
-    category: Category.MOBILE,
-    quantity: 2,
+    items: [{ category: Category.MOBILE, quantity: 2 }],
     address: '123 Main St, Mumbai',
+    type: 'HOME_PICKUP',
     status: RequestStatus.CREATED,
     imageUrls: [],
     createdAt: new Date().toISOString(),
@@ -55,9 +55,9 @@ const mockRequests: Request[] = [
   {
     id: 'req2',
     userId: '1',
-    category: Category.LAPTOP,
-    quantity: 1,
+    items: [{ category: Category.LAPTOP, quantity: 1 }],
     address: '123 Main St, Mumbai',
+    type: 'HOME_PICKUP',
     status: RequestStatus.SCHEDULED,
     scheduledTime: '2024-12-20T10:00:00Z',
     imageUrls: ['example-image.jpg'],
@@ -113,16 +113,34 @@ export const mockApi = {
     await delay(500);
     return { message: 'OTP sent successfully. Use 1234 for testing.', otp: '1234' };
   },
-  login: async (phone: string, otp: string) => {
+  login: async (phone: string, password?: string) => {
     await delay(500);
-    // Accept any 4-digit OTP for development
-    if (otp.length !== 4 || !/^\d{4}$/.test(otp)) {
-      throw new Error('Invalid OTP. Must be 4 digits.');
+    // Allow '123456' as a generic password for demo or any existing user
+    if (password && password.length < 6) {
+      throw new Error('Invalid password. Must be at least 6 characters.');
     }
     const user = mockUsers.find(u => u.phone === phone) || mockUsers[0];
     return {
       token: `mock_token_${user.id}_${Date.now()}`,
       user,
+    };
+  },
+  signup: async (data: any) => {
+    await delay(500);
+    if (data.otp !== '1234') {
+      throw new Error('Invalid OTP. Must be 1234.');
+    }
+    const newUser: User = {
+      id: `new_${Date.now()}`,
+      name: data.name,
+      phone: data.phone,
+      role: Role.CITIZEN,
+      address: data.address,
+    };
+    mockUsers.push(newUser);
+    return {
+      token: `mock_token_${newUser.id}_${Date.now()}`,
+      user: newUser,
     };
   },
   getMe: async (token: string) => {
@@ -246,8 +264,8 @@ export const mockApi = {
     if (pickup.otp !== data.otp) {
       throw new Error('Invalid OTP');
     }
-    pickup.weight = data.weight;
-    pickup.condition = data.condition;
+    pickup.evaluatedItems = data.evaluatedItems || [];
+    pickup.finalPrice = data.finalPrice;
     pickup.completedAt = new Date().toISOString();
     return pickup;
   },

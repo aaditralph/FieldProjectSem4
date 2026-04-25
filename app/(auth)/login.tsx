@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/src/store/authStore';
-import { useRouter } from 'expo-router';
+import { Link, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -15,53 +15,25 @@ import {
 
 export default function LoginScreen() {
   const [phone, setPhone] = useState('');
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
-  const [otp, setOtp] = useState('');
-  const [storedOtp, setStoredOtp] = useState('');
+  const [password, setPassword] = useState('');
   
-  const { sendOtp, login, isLoading, error, clearError } = useAuthStore();
+  const { login, isLoading, error, clearError } = useAuthStore();
   const router = useRouter();
 
-  const handleSendOtp = async () => {
+  const handleLogin = async () => {
     if (phone.length !== 10) {
       Alert.alert('Invalid Phone', 'Please enter a valid 10-digit phone number');
       return;
     }
-
-    try {
-      clearError();
-      const otpCode = await sendOtp(phone);
-      setStoredOtp(otpCode);
-      setStep('otp');
-      Alert.alert(otpCode);
-      
-      if (otpCode) {
-        Alert.alert(
-          '📱 OTP Received (Mock SMS)',
-          `Your BMC E-Waste OTP is: ${otpCode}\n\n(In production, this will be sent via SMS)`,
-          [{ text: 'OK', style: 'default' }]
-        );
-      }
-    } catch (err: any) {
-      const errorMsg = typeof err === 'string' ? err : (err?.message || 'Failed to send OTP');
-      Alert.alert('Error', errorMsg);
-    }
-  };
-
-  const handleLogin = async () => {
-    if (otp.length !== 4) {
-      Alert.alert('Invalid OTP', 'Please enter a 4-digit OTP');
+    
+    if (password.length < 6) {
+      Alert.alert('Invalid Password', 'Password must be at least 6 characters');
       return;
     }
 
     try {
       clearError();
-      console.log('Attempting login with phone:', phone, 'OTP:', storedOtp || otp);
-      
-      // Use stored OTP from mock API or user input
-      await login(phone, storedOtp || otp);
-      
-      console.log('Login successful!');
+      await login(phone, password);
       
       // Explicitly navigate based on user role
       const currentUser = useAuthStore.getState().user;
@@ -74,7 +46,8 @@ export default function LoginScreen() {
       }
     } catch (err: any) {
       console.error('Login error:', err);
-      const errorMessage = error || err.message || 'Invalid OTP. Please try again.';
+      const storeError = useAuthStore.getState().error;
+      const errorMessage = storeError || err?.message || 'Login failed. Please try again.';
       Alert.alert('Login Failed', errorMessage);
     }
   };
@@ -89,81 +62,61 @@ export default function LoginScreen() {
         <Text style={styles.subtitle}>Recycle Responsibly</Text>
 
         <View style={styles.form}>
-          {step === 'phone' ? (
-            <>
-              <Text style={styles.label}>Phone Number</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter 10-digit phone number"
-                keyboardType="phone-pad"
-                maxLength={10}
-                value={phone}
-                onChangeText={setPhone}
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={[styles.button, isLoading && styles.buttonDisabled]}
-                onPress={handleSendOtp}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Send OTP</Text>
-                )}
+          <Text style={styles.label}>Phone Number</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter 10-digit phone number"
+            keyboardType="phone-pad"
+            maxLength={10}
+            value={phone}
+            onChangeText={setPhone}
+            editable={!isLoading}
+          />
+          
+          <Text style={styles.label}>Password</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Enter your password"
+            secureTextEntry
+            value={password}
+            onChangeText={setPassword}
+            editable={!isLoading}
+          />
+          
+          <TouchableOpacity
+            style={[styles.button, isLoading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>Login</Text>
+            )}
+          </TouchableOpacity>
+          
+          <View style={styles.signupContainer}>
+            <Text style={styles.signupText}>Don't have an account? </Text>
+            <Link href="/(auth)/signup" asChild>
+              <TouchableOpacity>
+                <Text style={styles.signupLink}>Sign Up</Text>
               </TouchableOpacity>
-            </>
-          ) : (
-            <>
-              <Text style={styles.label}>Enter OTP</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter 4-digit OTP"
-                keyboardType="number-pad"
-                maxLength={4}
-                value={otp}
-                onChangeText={setOtp}
-                editable={!isLoading}
-              />
-              <TouchableOpacity
-                style={[styles.button, isLoading && styles.buttonDisabled]}
-                onPress={handleLogin}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.buttonText}>Verify & Login</Text>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => {
-                  setStep('phone');
-                  setOtp('');
-                  setStoredOtp('');
-                }}
-              >
-                <Text style={styles.backButtonText}>Change Phone Number</Text>
-              </TouchableOpacity>
-            </>
-          )}
+            </Link>
+          </View>
 
           {error && <Text style={styles.errorText}>{error}</Text>}
         </View>
 
         <View style={styles.demoInfo}>
-          <Text style={styles.demoTitle}>📝 How it works:</Text>
-          <Text style={styles.demoText}>• Enter any 10-digit phone number</Text>
-          <Text style={styles.demoText}>• Auto-registration on first login</Text>
-          <Text style={styles.demoText}>• Use OTP: 1234 for testing</Text>
-          <Text style={styles.demoText}>• Default role: Citizen</Text>
+          <Text style={styles.demoTitle}>📝 Demo Notes:</Text>
+          <Text style={styles.demoText}>• Use password "123456" for demo users</Text>
+          <Text style={styles.demoText}>• Real users need to sign up first</Text>
         </View>
 
         <View style={[styles.demoInfo, styles.demoInfoSmall]}>
           <Text style={styles.demoTitle}>👥 Demo Accounts:</Text>
           <Text style={styles.demoText}>Citizen: 9876543210</Text>
-          <Text style={styles.demoText}>Vendor: 9876543211</Text>
+          <Text style={styles.demoText}>Pick Up Everywhere: 9876543211</Text>
           <Text style={styles.demoText}>Admin: 9876543212</Text>
         </View>
       </View>
@@ -234,13 +187,19 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-  backButton: {
-    marginTop: 16,
-    alignItems: 'center',
+  signupContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
   },
-  backButtonText: {
-    color: '#3498db',
+  signupText: {
+    color: '#7f8c8d',
     fontSize: 14,
+  },
+  signupLink: {
+    color: '#27ae60',
+    fontSize: 14,
+    fontWeight: '600',
   },
   errorText: {
     color: '#e74c3c',

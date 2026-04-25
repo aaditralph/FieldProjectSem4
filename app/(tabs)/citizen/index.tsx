@@ -4,13 +4,13 @@ import { Request, RequestStatus } from '@/src/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function CitizenHomeScreen() {
@@ -74,22 +74,21 @@ export default function CitizenHomeScreen() {
   const renderRequest = ({ item }: { item: Request }) => {
     // Handle both _id (from backend) and id (from mock)
     const itemId = (item as any)._id || item.id;
-    const items = (item.items && item.items.length > 0) 
-      ? item.items 
+    const items = (item.items && item.items.length > 0)
+      ? item.items
       : ((item as any).category ? [{ category: (item as any).category, quantity: (item as any).quantity }] : []);
-    
-    if (items.length === 0) return null;
+
+    if (items.length === 0 && item.type !== 'DRIVE') return null;
 
     return (
       <TouchableOpacity
         style={styles.card}
-        onPress={() => router.push(`/citizen/request/${itemId}` as any)}
       >
         <View style={styles.cardHeader}>
           <Text style={styles.category}>
-            {items.length > 1 
-              ? `Multiple Items (${items.length})` 
-              : items[0]?.category}
+            {item.type === 'DRIVE' ? 'Community Drive' : (items.length > 1
+              ? `Multiple Items (${items.length})`
+              : items[0]?.category)}
           </Text>
           <View style={[styles.statusBadge, { backgroundColor: getStatusColor(item.status) }]}>
             <Text style={styles.statusText}>{item.status}</Text>
@@ -97,7 +96,7 @@ export default function CitizenHomeScreen() {
         </View>
         <View style={styles.cardBody}>
           <Text style={styles.detail}>
-            Items: {items.map(i => `${i.category} x${i.quantity}`).join(', ')}
+            Items: {item.type === 'DRIVE' ? 'N/A' : items.map(i => `${i.category} x${i.quantity}`).join(', ')}
           </Text>
           <Text style={styles.detail}>Address: {item.address}</Text>
           <Text style={styles.detail}>Created: {formatDate(item.createdAt)}</Text>
@@ -106,13 +105,13 @@ export default function CitizenHomeScreen() {
               Scheduled: {formatDate(item.scheduledTime)}
             </Text>
           )}
-          
+
           {/* Show assigned vendor info */}
           {(item as any).assignedVendorId && (
             <View style={styles.vendorCard}>
-              <Text style={styles.vendorLabel}>📦 Assigned Vendor</Text>
+              <Text style={styles.vendorLabel}>📦 Assigned Pick Up Everywhere</Text>
               <Text style={styles.vendorName}>
-                {(item as any).assignedVendorId.name || 'Vendor'}
+                {(item as any).assignedVendorId.name || 'Pick Up Everywhere'}
               </Text>
               {!!(item as any).assignedVendorId.phone && (
                 <Text style={styles.vendorPhone}>
@@ -127,7 +126,7 @@ export default function CitizenHomeScreen() {
             <View style={styles.otpCard}>
               <Text style={styles.otpLabel}>🔑 Verification OTP</Text>
               <Text style={styles.otpValue}>{item.otp}</Text>
-              <Text style={styles.otpHelper}>Share with vendor to complete pickup</Text>
+              <Text style={styles.otpHelper}>Share with Pick Up Everywhere to complete pickup</Text>
             </View>
           )}
         </View>

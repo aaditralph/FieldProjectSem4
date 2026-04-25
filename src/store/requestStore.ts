@@ -228,18 +228,27 @@ export const useRequestStore = create<RequestState>((set, get) => ({
       const response = await requestApi.uploadImages(id, formData);
 
       // Update imageUrls in current request and requests list
-      const updatedRequest = response.data;
+      const currentReq = get().currentRequest;
+      const updatedRequest = currentReq?.id === id 
+        ? { ...currentReq, imageUrls: response.data.imageUrls } 
+        : get().requests.find(r => r.id === id) 
+          ? { ...get().requests.find(r => r.id === id)!, imageUrls: response.data.imageUrls }
+          : null;
       
-      set({
-        currentRequest: updatedRequest,
-        isLoading: false,
-      });
+      if (updatedRequest) {
+        set({
+          currentRequest: get().currentRequest?.id === id ? updatedRequest : get().currentRequest,
+          isLoading: false,
+        });
 
-      // Also update in the requests list
-      const requests = get().requests.map(req =>
-        req.id === id ? updatedRequest : req
-      );
-      set({ requests });
+        // Also update in the requests list
+        const requests = get().requests.map(req =>
+          req.id === id ? updatedRequest : req
+        );
+        set({ requests });
+      } else {
+        set({ isLoading: false });
+      }
 
     } catch (error: any) {
       set({

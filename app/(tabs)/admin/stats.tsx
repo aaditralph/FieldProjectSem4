@@ -32,8 +32,8 @@ export default function AdminStatsScreen() {
     try {
       if (!silent) setLoading(true);
       setError(null);
-      const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.137.66:5000/api/admin/dashboard-analytics', {
+      const token = await require('@/src/utils/storage').getItemAsync('auth_token');
+      const response = await fetch('http://192.168.1.45:5000/api/admin/dashboard-analytics', {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 

@@ -26,8 +26,8 @@ export default function CompletedAssignmentsScreen() {
   const loadRequests = async () => {
     try {
       setIsLoadingRequests(true);
-      const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.137.66:5000/api/admin/requests', {
+      const token = await require('@/src/utils/storage').getItemAsync('auth_token');
+      const response = await fetch('http://192.168.1.45:5000/api/admin/requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

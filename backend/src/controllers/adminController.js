@@ -48,6 +48,18 @@ const assignVendor = async (req, res) => {
     request.assignedVendorId = vendorId;
     request.status = 'IN_PROGRESS';
     request.otp = generateOTP();
+
+    if (request.type === 'DRIVE') {
+      const Drive = require('../models/Drive');
+      await Drive.create({
+        location: request.address,
+        date: request.scheduledTime || Date.now(),
+        capacity: 100,
+        registeredCount: 1,
+        registeredUsers: [request.userId],
+      });
+    }
+
     await request.save();
 
     // Log action
@@ -216,6 +228,37 @@ const getDashboardAnalytics = async (req, res) => {
   }
 };
 
+// @desc    Reject request
+// @route   PUT /admin/requests/:id/reject
+// @access  Private (Admin)
+const rejectRequest = async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+    
+    if (request.status !== 'CREATED' && request.status !== 'SCHEDULED') {
+      return res.status(400).json({ message: 'Cannot reject request in current status' });
+    }
+
+    request.status = 'CANCELLED';
+    await request.save();
+
+    await AuditLog.create({
+      action: 'request_rejected',
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      requestId: request._id,
+    });
+
+    res.json(request);
+  } catch (error) {
+    console.error('Reject request error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   getVendors,
   assignVendor,
@@ -223,4 +266,5 @@ module.exports = {
   createVendor,
   toggleVendorStatus,
   getDashboardAnalytics,
+  rejectRequest,
 };

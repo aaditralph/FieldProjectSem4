@@ -1,8 +1,10 @@
 import { useRequestStore } from '@/src/store/requestStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { Drive } from '@/src/types';
 import React, { useEffect } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     FlatList,
     StyleSheet,
     Text,
@@ -11,7 +13,8 @@ import {
 } from 'react-native';
 
 export default function DrivesScreen() {
-  const { drives, isLoading, fetchDrives } = useRequestStore();
+  const { drives, isLoading, fetchDrives, joinDrive } = useRequestStore();
+  const { user } = useAuthStore();
 
   useEffect(() => {
     fetchDrives();
@@ -26,8 +29,20 @@ export default function DrivesScreen() {
     });
   };
 
+  const handleJoinDrive = async (item: Drive) => {
+    try {
+      const driveId = (item as any)._id || item.id;
+      await joinDrive(driveId);
+      Alert.alert('Success', 'Successfully joined the community drive!');
+      await fetchDrives();
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to join drive');
+    }
+  };
+
   const renderDrive = ({ item }: { item: Drive }) => {
     const isFull = item.registeredCount >= item.capacity;
+    const isRegistered = item.registeredUsers && user && item.registeredUsers.includes((user as any)._id || user.id);
     const percentage = (item.registeredCount / item.capacity) * 100;
 
     return (
@@ -51,8 +66,12 @@ export default function DrivesScreen() {
               ]}
             />
           </View>
-          {!isFull && (
-            <TouchableOpacity style={styles.joinButton}>
+          {isRegistered ? (
+            <View style={[styles.joinButton, styles.registeredButton]}>
+              <Text style={styles.joinButtonText}>✓ Registered</Text>
+            </View>
+          ) : !isFull && (
+            <TouchableOpacity style={styles.joinButton} onPress={() => handleJoinDrive(item)}>
               <Text style={styles.joinButtonText}>Join Drive</Text>
             </TouchableOpacity>
           )}
@@ -74,7 +93,7 @@ export default function DrivesScreen() {
       <FlatList
         data={drives}
         renderItem={renderDrive}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => (item as any)._id || item.id || Math.random().toString()}
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           <View style={styles.empty}>
@@ -174,6 +193,9 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',
+  },
+  registeredButton: {
+    backgroundColor: '#95a5a6',
   },
   empty: {
     alignItems: 'center',

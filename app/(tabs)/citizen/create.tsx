@@ -19,6 +19,7 @@ export default function CreateRequestScreen() {
   const [currentQuantity, setCurrentQuantity] = useState('');
   
   const [address, setAddress] = useState('');
+  const [scheduledTime, setScheduledTime] = useState('');
   const [type, setType] = useState<'HOME_PICKUP' | 'DRIVE'>('HOME_PICKUP');
   
   const { createRequest, isLoading, error, clearError } = useRequestStore();
@@ -51,7 +52,7 @@ export default function CreateRequestScreen() {
   };
 
   const handleSubmit = async () => {
-    if (items.length === 0) {
+    if (type === 'HOME_PICKUP' && items.length === 0) {
       Alert.alert('Empty Request', 'Please add at least one item');
       return;
     }
@@ -61,13 +62,25 @@ export default function CreateRequestScreen() {
       return;
     }
 
+    if (type === 'DRIVE') {
+       if (!scheduledTime.trim()) {
+           Alert.alert('Missing Date', 'Please specify a requested date for the drive');
+           return;
+       }
+       if (isNaN(new Date(scheduledTime).getTime())) {
+           Alert.alert('Invalid Date', 'Please specify a valid date in YYYY-MM-DD format');
+           return;
+       }
+    }
+
     try {
       clearError();
       await createRequest({
         items,
         address: address.trim(),
         type,
-      });
+        scheduledTime: type === 'DRIVE' ? new Date(scheduledTime).toISOString() : undefined,
+      } as any);
       
       Alert.alert('Success', 'Request created successfully!', [
         { text: 'OK', onPress: () => router.back() },
@@ -82,7 +95,7 @@ export default function CreateRequestScreen() {
       <View style={styles.form}>
         
         {/* CART LIST */}
-        {items.length > 0 && (
+        {type === 'HOME_PICKUP' && items.length > 0 && (
           <View style={styles.cartContainer}>
             <Text style={styles.label}>Items to Pickup</Text>
             {items.map((item, idx) => (
@@ -96,6 +109,7 @@ export default function CreateRequestScreen() {
           </View>
         )}
 
+        {type === 'HOME_PICKUP' && (
         <View style={styles.addItemSection}>
           <Text style={styles.label}>Select Electronic Item</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
@@ -134,16 +148,29 @@ export default function CreateRequestScreen() {
             </TouchableOpacity>
           </View>
         </View>
+        )}
 
-        <Text style={styles.label}>Pickup Address</Text>
+        <Text style={styles.label}>Pickup Address / Location</Text>
         <TextInput
           style={[styles.input, styles.textArea]}
-          placeholder="Enter your complete address"
+          placeholder="Enter your complete address or location"
           value={address}
           onChangeText={setAddress}
           multiline
           numberOfLines={3}
         />
+
+        {type === 'DRIVE' && (
+          <>
+            <Text style={styles.label}>Requested Drive Date (YYYY-MM-DD)</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="e.g. 2026-05-15"
+              value={scheduledTime}
+              onChangeText={setScheduledTime}
+            />
+          </>
+        )}
 
         <Text style={styles.label}>Request Type</Text>
         <View style={styles.typeContainer}>

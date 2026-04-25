@@ -1,5 +1,5 @@
 import { useVendorStore } from '@/src/store/vendorStore';
-import { Condition, Pickup, Request } from '@/src/types';
+import { Category, Condition, Pickup, Request } from '@/src/types';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -12,6 +12,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  ScrollView,
 } from 'react-native';
 
 type PickupWithRequest = Pickup & { request: Request };
@@ -24,6 +25,7 @@ export default function VendorHomeScreen() {
   const [evaluations, setEvaluations] = useState<Record<string, { weight: string; condition: Condition }>>({});
   const [finalPrice, setFinalPrice] = useState('');
   const [refreshing, setRefreshing] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
 
   // Cast store pickups to the correct type (backend returns Request objects)
   const pickups = storePickups as any[];
@@ -54,8 +56,8 @@ export default function VendorHomeScreen() {
           text: 'Accept',
           onPress: async () => {
             try {
-              const token = await require('expo-secure-store').getItemAsync('auth_token');
-              const response = await fetch(`http://192.168.137.66:5000/api/vendor/pickups/${pickupId}/accept`, {
+              const token = await require('@/src/utils/storage').getItemAsync('auth_token');
+              const response = await fetch(`http://192.168.1.45:5000/api/vendor/pickups/${pickupId}/accept`, {
                 method: 'POST',
                 headers: {
                   'Authorization': `Bearer ${token}`,
@@ -82,10 +84,15 @@ export default function VendorHomeScreen() {
     if (!selectedPickup) return;
 
     // Validate evaluations
-    const items = selectedPickup.items || selectedPickup.request?.items || [];
-    for (const item of items) {
-      if (!evaluations[item.category] || !evaluations[item.category].weight) {
-        Alert.alert('Missing Info', `Please enter weight for ${item.category}`);
+    const evalKeys = Object.keys(evaluations);
+    if (evalKeys.length === 0) {
+      Alert.alert('Missing Info', 'Please add at least one evaluated item');
+      return;
+    }
+
+    for (const cat of evalKeys) {
+      if (!evaluations[cat] || !evaluations[cat].weight) {
+        Alert.alert('Missing Info', `Please enter weight for ${cat}`);
         return;
       }
     }
@@ -93,10 +100,10 @@ export default function VendorHomeScreen() {
     try {
       const pickupId = selectedPickup._id || selectedPickup.id;
 
-      const evaluatedItems = items.map((item: any) => ({
-        category: item.category,
-        weight: parseFloat(evaluations[item.category].weight),
-        condition: evaluations[item.category].condition,
+      const evaluatedItems = evalKeys.map((cat: string) => ({
+        category: cat,
+        weight: parseFloat(evaluations[cat].weight),
+        condition: evaluations[cat].condition,
       }));
 
       const payload: any = {
@@ -128,6 +135,7 @@ export default function VendorHomeScreen() {
       initialEvals[item.category] = { weight: '', condition: Condition.WORKING };
     });
     setEvaluations(initialEvals);
+    setShowAddCategory(false);
     setModalVisible(true);
   };
 
@@ -151,7 +159,7 @@ export default function VendorHomeScreen() {
       : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
 
     // Skip if request data is missing
-    if (!request || items.length === 0) {
+    if (!request || (items.length === 0 && request.type !== 'DRIVE')) {
       return (
         <View style={styles.card}>
           <Text style={styles.emptyText}>Invalid pickup data</Text>
@@ -163,9 +171,9 @@ export default function VendorHomeScreen() {
       <View style={styles.card}>
         <View style={styles.cardHeader}>
           <Text style={styles.category}>
-            {items.length > 1
+            {request.type === 'DRIVE' ? 'Community Drive' : (items.length > 1
               ? `Multiple Items (${items.length})`
-              : items[0]?.category}
+              : items[0]?.category)}
           </Text>
           <View style={styles.statusBadge}>
             <Text style={styles.statusText}>{request.status}</Text>
@@ -252,49 +260,87 @@ export default function VendorHomeScreen() {
             />
 
             <Text style={styles.label}>Evaluate Items</Text>
-            {selectedPickup && (selectedPickup.items || selectedPickup.request?.items || []).map((item: any) => (
-              <View key={item.category} style={styles.evaluationCard}>
-                <Text style={styles.evalTitle}>{item.category} (Qty: {item.quantity})</Text>
+            {Object.keys(evaluations).map((cat: string) => {
+              const reqItems = selectedPickup?.items || selectedPickup?.request?.items || [];
+              const matchedReqItem = reqItems.find((i: any) => i.category === cat);
+              return (
+                <View key={cat} style={styles.evaluationCard}>
+                  <View style={styles.evalHeader}>
+                    <Text style={styles.evalTitle}>
+                      {cat} {matchedReqItem ? `(Qty: ${matchedReqItem.quantity})` : '(Added)'}
+                    </Text>
+                    {!matchedReqItem && (
+                      <TouchableOpacity onPress={() => {
+                        const newEvals = { ...evaluations };
+                        delete newEvals[cat];
+                        setEvaluations(newEvals);
+                      }}>
+                        <Text style={styles.removeText}>Remove</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
 
-                <Text style={styles.subLabel}>Weight (kg)</Text>
-                <TextInput
-                  style={styles.evalInput}
-                  placeholder="Enter weight in kg"
-                  keyboardType="decimal-pad"
-                  value={evaluations[item.category]?.weight || ''}
-                  onChangeText={(val) => setEvaluations({
-                    ...evaluations,
-                    [item.category]: { ...evaluations[item.category], weight: val }
-                  })}
-                />
+                  <Text style={styles.subLabel}>Weight (kg)</Text>
+                  <TextInput
+                    style={styles.evalInput}
+                    placeholder="Enter weight in kg"
+                    keyboardType="decimal-pad"
+                    value={evaluations[cat]?.weight || ''}
+                    onChangeText={(val) => setEvaluations({
+                      ...evaluations,
+                      [cat]: { ...evaluations[cat], weight: val }
+                    })}
+                  />
 
-                <Text style={styles.subLabel}>Condition</Text>
-                <View style={styles.conditionContainer}>
-                  {Object.values(Condition).map((cond) => (
-                    <TouchableOpacity
-                      key={cond}
-                      style={[
-                        styles.conditionButton,
-                        evaluations[item.category]?.condition === cond && styles.conditionButtonActive,
-                      ]}
-                      onPress={() => setEvaluations({
-                        ...evaluations,
-                        [item.category]: { ...evaluations[item.category], condition: cond }
-                      })}
-                    >
-                      <Text
+                  <Text style={styles.subLabel}>Condition</Text>
+                  <View style={styles.conditionContainer}>
+                    {Object.values(Condition).map((cond) => (
+                      <TouchableOpacity
+                        key={cond}
                         style={[
-                          styles.conditionText,
-                          evaluations[item.category]?.condition === cond && styles.conditionTextActive,
+                          styles.conditionButton,
+                          evaluations[cat]?.condition === cond && styles.conditionButtonActive,
                         ]}
+                        onPress={() => setEvaluations({
+                          ...evaluations,
+                          [cat]: { ...evaluations[cat], condition: cond }
+                        })}
                       >
-                        {cond}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+                        <Text
+                          style={[
+                            styles.conditionText,
+                            evaluations[cat]?.condition === cond && styles.conditionTextActive,
+                          ]}
+                        >
+                          {cond}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
                 </View>
-              </View>
-            ))}
+              )
+            })}
+
+            <TouchableOpacity style={styles.addCategoryBtn} onPress={() => setShowAddCategory(!showAddCategory)}>
+              <Text style={styles.addCategoryBtnText}>{showAddCategory ? 'Close' : '+ Add Item Category'}</Text>
+            </TouchableOpacity>
+
+            {showAddCategory && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
+                {Object.values(Category).filter(c => !evaluations[c]).map(cat => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={styles.categoryChip}
+                    onPress={() => {
+                      setEvaluations({ ...evaluations, [cat]: { weight: '', condition: Condition.WORKING } });
+                      setShowAddCategory(false);
+                    }}
+                  >
+                    <Text style={styles.categoryChipText}>{cat}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
 
             <Text style={styles.label}>Final Price Override (₹) - Optional</Text>
             <TextInput
@@ -559,5 +605,39 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  addCategoryBtn: {
+    paddingVertical: 8,
+    marginBottom: 8,
+  },
+  addCategoryBtnText: {
+    color: '#2980b9',
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  categoryScroll: {
+    marginBottom: 16,
+  },
+  categoryChip: {
+    backgroundColor: '#ecf0f1',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  categoryChipText: {
+    color: '#2c3e50',
+    fontSize: 12,
+  },
+  evalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  removeText: {
+    color: '#e74c3c',
+    fontSize: 12,
+    fontWeight: 'bold',
   },
 });

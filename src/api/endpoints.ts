@@ -18,10 +18,12 @@ import apiClient from './client';
 
 // Auth endpoints
 export const authApi = {
-  sendOtp: (phone: string) => 
-    apiClient.post<{ message: string; otp?: string }>('/auth/send-otp', { phone }),
+  sendOtp: (phone: string, action?: string) => 
+    apiClient.post<{ message: string; otp?: string }>('/auth/send-otp', { phone, action }),
   login: (data: LoginRequest) => 
     apiClient.post<AuthResponse>('/auth/login', data),
+  signup: (data: import('../types').SignupRequest) => 
+    apiClient.post<AuthResponse>('/auth/signup', data),
   getMe: () => 
     apiClient.get<User>('/me'),
 };

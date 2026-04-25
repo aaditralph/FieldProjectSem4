@@ -1,0 +1,13 @@
+app/(tabs)/citizen/drives.tsx(45,31): error TS2339: Property 'registeredUsers' does not exist on type 'Drive'.
+app/(tabs)/citizen/drives.tsx(45,63): error TS2339: Property 'registeredUsers' does not exist on type 'Drive'.
+app/(tabs)/citizen/index.tsx(81,36): error TS2339: Property 'type' does not exist on type 'Request'.
+app/(tabs)/citizen/index.tsx(89,19): error TS2339: Property 'type' does not exist on type 'Request'.
+app/(tabs)/citizen/index.tsx(99,26): error TS2339: Property 'type' does not exist on type 'Request'.
+src/api/mock.ts(47,5): error TS2353: Object literal may only specify known properties, and 'category' does not exist in type 'Request'.
+src/api/mock.ts(58,5): error TS2353: Object literal may only specify known properties, and 'category' does not exist in type 'Request'.
+src/api/mock.ts(267,12): error TS2339: Property 'weight' does not exist on type 'Pickup & { request: Request; }'.
+src/api/mock.ts(268,12): error TS2339: Property 'condition' does not exist on type 'Pickup & { request: Request; }'.
+src/store/requestStore.ts(234,9): error TS2740: Type '{ message: string; imageUrls: string[]; }' is missing the following properties from type 'Request': id, userId, items, address, and 3 more.
+src/store/requestStore.ts(242,13): error TS2322: Type '(Request | { message: string; imageUrls: string[]; })[]' is not assignable to type 'Request[]'.
+  Type 'Request | { message: string; imageUrls: string[]; }' is not assignable to type 'Request'.
+    Type '{ message: string; imageUrls: string[]; }' is missing the following properties from type 'Request': id, userId, items, address, and 3 more.

@@ -76,7 +76,7 @@ const PORT = process.env.PORT || 5000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📡 Local: http://localhost:${PORT}/api`);
-  console.log(`🌐 Network: http://192.168.137.66:${PORT}/api`);
+  console.log(`🌐 Network: http://192.168.1.45:${PORT}/api`);
   console.log(`📱 Use the Network URL in your React Native app .env file`);
 });
 

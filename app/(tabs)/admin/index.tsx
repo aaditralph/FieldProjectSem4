@@ -84,8 +84,8 @@ export default function AdminHomeScreen() {
   const loadRequests = async (silent = false) => {
     try {
       if (!silent) setIsLoadingRequests(true);
-      const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.137.66:5000/api/admin/requests', {
+      const token = await require('@/src/utils/storage').getItemAsync('auth_token');
+      const response = await fetch('http://192.168.1.45:5000/api/admin/requests', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -107,8 +107,8 @@ export default function AdminHomeScreen() {
 
   const loadVendors = async () => {
     try {
-      const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.137.66:5000/api/admin/vendors', {
+      const token = await require('@/src/utils/storage').getItemAsync('auth_token');
+      const response = await fetch('http://192.168.1.45:5000/api/admin/vendors', {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -128,16 +128,16 @@ export default function AdminHomeScreen() {
 
   const handleAssignVendor = async () => {
     if (!selectedRequest || !selectedVendorId) {
-      Alert.alert('Error', 'Please select a vendor');
+      Alert.alert('Error', 'Please select a Pick Up Everywhere');
       return;
     }
 
     try {
-      const response = await fetch(`http://192.168.137.66:5000/api/admin/requests/${selectedRequest._id}/assign`, {
+      const response = await fetch(`http://192.168.1.45:5000/api/admin/requests/${selectedRequest._id}/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await require('expo-secure-store').getItemAsync('auth_token'))}`,
+          'Authorization': `Bearer ${(await require('@/src/utils/storage').getItemAsync('auth_token'))}`,
         },
         body: JSON.stringify({ vendorId: selectedVendorId }),
       });
@@ -147,14 +147,48 @@ export default function AdminHomeScreen() {
         throw new Error(error.message);
       }
 
-      Alert.alert('Success', 'Vendor assigned successfully!');
+      Alert.alert('Success', 'Pick Up Everywhere assigned successfully!');
       setAssignModalVisible(false);
       setSelectedRequest(null);
       setSelectedVendorId('');
       loadRequests();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to assign vendor');
+      Alert.alert('Error', error.message || 'Failed to assign Pick Up Everywhere');
     }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    Alert.alert(
+      "Confirm Rejection",
+      "Are you sure you want to reject and cancel this request?",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Reject",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const response = await fetch(`http://192.168.1.45:5000/api/admin/requests/${requestId}/reject`, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${(await require('@/src/utils/storage').getItemAsync('auth_token'))}`,
+                },
+              });
+
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.message);
+              }
+
+              Alert.alert('Success', 'Request rejected successfully!');
+              loadRequests();
+            } catch (error: any) {
+              Alert.alert('Error', error.message || 'Failed to reject request');
+            }
+          }
+        }
+      ]
+    );
   };
 
   const handleCreateVendor = async () => {
@@ -163,11 +197,11 @@ export default function AdminHomeScreen() {
       return;
     }
     try {
-      const response = await fetch('http://192.168.137.66:5000/api/admin/vendors', {
+      const response = await fetch('http://192.168.1.45:5000/api/admin/vendors', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${(await require('expo-secure-store').getItemAsync('auth_token'))}`,
+          'Authorization': `Bearer ${(await require('@/src/utils/storage').getItemAsync('auth_token'))}`,
         },
         body: JSON.stringify(newVendor),
       });
@@ -176,21 +210,21 @@ export default function AdminHomeScreen() {
         const error = await response.json();
         throw new Error(error.message);
       }
-      Alert.alert('Success', 'Vendor created successfully!');
+      Alert.alert('Success', 'Pick Up Everywhere created successfully!');
       setCreateVendorModalVisible(false);
       setNewVendor({ name: '', email: '', phone: '', password: '' });
       loadVendors();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to create vendor');
+      Alert.alert('Error', error.message || 'Failed to create Pick Up Everywhere');
     }
   };
 
   const handleToggleVendorStatus = async (vendorId: string) => {
     try {
-      const response = await fetch(`http://192.168.137.66:5000/api/admin/vendors/${vendorId}/toggle-status`, {
+      const response = await fetch(`http://192.168.1.45:5000/api/admin/vendors/${vendorId}/toggle-status`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${(await require('expo-secure-store').getItemAsync('auth_token'))}`,
+          'Authorization': `Bearer ${(await require('@/src/utils/storage').getItemAsync('auth_token'))}`,
         },
       });
 
@@ -199,7 +233,7 @@ export default function AdminHomeScreen() {
       }
       loadVendors();
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update vendor');
+      Alert.alert('Error', error.message || 'Failed to update Pick Up Everywhere');
     }
   };
 
@@ -275,22 +309,22 @@ export default function AdminHomeScreen() {
             const items = (request.items && request.items.length > 0)
               ? request.items
               : (request.category ? [{ category: request.category, quantity: request.quantity }] : []);
-            if (items.length === 0) return null;
+            if (items.length === 0 && request.type !== 'DRIVE') return null;
 
             return (
               <View key={request._id} style={styles.requestCard}>
                 <View style={styles.requestHeader}>
                   <Text style={styles.requestCategory}>
-                    {items.length > 1
+                    {request.type === 'DRIVE' ? 'Community Drive' : (items.length > 1
                       ? `Multiple Items (${items.length})`
-                      : items[0]?.category}
+                      : items[0]?.category)}
                   </Text>
                   <View style={[styles.statusBadge, { backgroundColor: getStatusColor(request.status) }]}>
                     <Text style={styles.statusText}>{request.status}</Text>
                   </View>
                 </View>
                 <Text style={styles.requestDetail}>
-                  Items: {items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
+                  Items: {request.type === 'DRIVE' ? 'N/A' : items.map((i: any) => `${i.category} x${i.quantity}`).join(', ')}
                 </Text>
                 <Text style={styles.requestDetail}>Customer: {request.userId?.name || 'N/A'}</Text>
                 <Text style={styles.requestDetail}>Phone: {request.userId?.phone || 'N/A'}</Text>
@@ -300,12 +334,20 @@ export default function AdminHomeScreen() {
                     <Text style={styles.vendorText}>Assigned: {request.assignedVendorId.name}</Text>
                   </View>
                 ) : (
-                  <TouchableOpacity
-                    style={styles.assignButton}
-                    onPress={() => openAssignModal(request)}
-                  >
-                    <Text style={styles.assignButtonText}>Assign Vendor</Text>
-                  </TouchableOpacity>
+                  <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                      style={[styles.assignButton, styles.flex1]}
+                      onPress={() => openAssignModal(request)}
+                    >
+                      <Text style={styles.assignButtonText}>Assign Pick Up Everywhere</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.rejectButton, styles.flex1]}
+                      onPress={() => handleRejectRequest(request._id)}
+                    >
+                      <Text style={styles.rejectButtonText}>Reject</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </View>
             )
@@ -318,13 +360,13 @@ export default function AdminHomeScreen() {
       {/* Vendor Management Section */}
       <View style={styles.section}>
         <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>Vendor Management</Text>
+          <Text style={styles.sectionTitle}>Pick Up Everywhere Management</Text>
           <TouchableOpacity style={styles.addButton} onPress={() => setCreateVendorModalVisible(true)}>
             <Text style={styles.addButtonText}>+ Add</Text>
           </TouchableOpacity>
         </View>
         {vendors.length === 0 ? (
-          <Text style={styles.emptyText}>No vendors found</Text>
+          <Text style={styles.emptyText}>No Pick Up Everywhere found</Text>
         ) : (
           vendors.map((vendor) => (
             <View key={vendor._id} style={styles.manageVendorCard}>
@@ -349,7 +391,7 @@ export default function AdminHomeScreen() {
         )}
       </View>
 
-      {/* Assign Vendor Modal */}
+      {/* Assign Pick Up Everywhere Modal */}
       <Modal
         visible={assignModalVisible}
         animationType="slide"
@@ -358,7 +400,7 @@ export default function AdminHomeScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Assign Vendor</Text>
+            <Text style={styles.modalTitle}>Assign Pick Up Everywhere</Text>
             {selectedRequest && (
               <>
                 <Text style={styles.modalLabel}>
@@ -375,7 +417,7 @@ export default function AdminHomeScreen() {
               </>
             )}
 
-            <Text style={styles.label}>Select Vendor</Text>
+            <Text style={styles.label}>Select Pick Up Everywhere</Text>
             {vendors.map((vendor) => (
               <TouchableOpacity
                 key={vendor._id}
@@ -410,7 +452,7 @@ export default function AdminHomeScreen() {
         </View>
       </Modal>
 
-      {/* Create Vendor Modal */}
+      {/* Create Pick Up Everywhere Modal */}
       <Modal
         visible={createVendorModalVisible}
         animationType="slide"
@@ -419,7 +461,7 @@ export default function AdminHomeScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Create New Vendor</Text>
+            <Text style={styles.modalTitle}>Create New Pick Up Everywhere</Text>
 
             <Text style={styles.label}>Name *</Text>
             <TextInput style={styles.input} value={newVendor.name} onChangeText={t => setNewVendor({ ...newVendor, name: t })} />
@@ -580,6 +622,26 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   assignButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+  },
+  flex1: {
+    flex: 1,
+    marginTop: 0,
+  },
+  rejectButton: {
+    backgroundColor: '#e74c3c',
+    padding: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  rejectButtonText: {
     color: '#fff',
     fontSize: 14,
     fontWeight: '600',

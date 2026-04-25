@@ -13,19 +13,10 @@ const sendOtp = async (req, res) => {
       return res.status(403).json({ message: 'Vendors can only be created by admin' });
     }
 
-    // Find or create user (auto-registration on first OTP request)
+    // Optional: check if user already exists
     let user = await User.findOne({ phone });
-    
-    if (!user) {
-      // Auto-create user with default role CITIZEN
-      user = await User.create({
-        name: `User ${phone.slice(-4)}`,
-        phone,
-        role: 'CITIZEN',
-        address: 'Not provided',
-      });
-      
-      console.log(`✅ New user auto-registered: ${phone}`);
+    if (user && req.body.action === 'signup') {
+      return res.status(400).json({ message: 'User already exists' });
     }
 
     // Generate OTP (in production, send via SMS)
@@ -48,9 +39,9 @@ const sendOtp = async (req, res) => {
 // @desc    Login with phone and OTP
 // @route   POST /auth/login
 // @access  Public
-const login = async (req, res) => {
+  const login = async (req, res) => {
   try {
-    const { phone, otp } = req.body;
+    const { phone, password } = req.body;
 
     // Find user
     const user = await User.findOne({ phone }).select('+password');
@@ -59,10 +50,14 @@ const login = async (req, res) => {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    // Verify OTP (in production, verify against stored OTP)
-    // For demo, we accept any 4-digit OTP
-    if (otp !== '1234' && otp.length !== 4) {
-      return res.status(401).json({ message: 'Invalid OTP' });
+    // Verify password
+    if (!user.password) {
+      return res.status(401).json({ message: 'Account needs password reset. Please sign up again or contact admin.' });
+    }
+
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials' });
     }
 
     if (!user.isActive) {
@@ -115,8 +110,66 @@ const getMe = async (req, res) => {
   }
 };
 
+// @desc    Sign up new user
+// @route   POST /auth/signup
+// @access  Public
+const signup = async (req, res) => {
+  try {
+    const { name, phone, password, address, otp } = req.body;
+
+    // Verify OTP (in production, verify against stored OTP)
+    if (otp !== '1234' && otp.length !== 4) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    // Check if user exists
+    const existingUser = await User.findOne({ phone });
+    if (existingUser) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
+
+    // Create user
+    const user = await User.create({
+      name,
+      phone,
+      password,
+      address,
+      role: 'CITIZEN', // Default role
+    });
+
+    console.log(`✅ New user registered: ${phone}`);
+
+    // Generate JWT token
+    const token = generateToken(user._id);
+
+    // Log the signup action
+    await AuditLog.create({
+      action: 'user_signup',
+      actorId: user._id,
+      actorRole: user.role,
+      meta: { phone },
+    });
+
+    res.status(201).json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        phone: user.phone,
+        email: user.email,
+        role: user.role,
+        address: user.address,
+      },
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   sendOtp,
   login,
+  signup,
   getMe,
 };

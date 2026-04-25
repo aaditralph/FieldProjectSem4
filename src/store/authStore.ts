@@ -1,4 +1,4 @@
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from '../utils/storage';
 import { create } from 'zustand';
 import { authApi } from '../api/endpoints';
 import { mockApi } from '../api/mock';
@@ -11,8 +11,9 @@ interface AuthState {
   isLoading: boolean;
   error: string | null;
   
-  login: (phone: string, otp: string) => Promise<void>;
-  sendOtp: (phone: string) => Promise<string>;
+  login: (phone: string, password?: string) => Promise<void>;
+  signup: (data: import('../types').SignupRequest) => Promise<void>;
+  sendOtp: (phone: string, action?: string) => Promise<string>;
   logout: () => Promise<void>;
   loadUser: () => Promise<void>;
   clearError: () => void;
@@ -27,7 +28,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: false,
   error: null,
 
-  sendOtp: async (phone: string) => {
+  sendOtp: async (phone: string, action?: string) => {
     try {
       set({ isLoading: true, error: null });
       
@@ -36,7 +37,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const response = await mockApi.sendOtp(phone);
         otp = response.otp || '';
       } else {
-        const response = await authApi.sendOtp(phone);
+        const response = await authApi.sendOtp(phone, action);
         otp = response.data.otp || '';
       }
       
@@ -51,15 +52,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  login: async (phone: string, otp: string) => {
+  login: async (phone: string, password?: string) => {
     try {
       set({ isLoading: true, error: null });
       
       let response;
       if (USE_MOCK) {
-        response = { data: await mockApi.login(phone, otp) };
+        response = { data: await mockApi.login(phone, password) };
       } else {
-        response = await authApi.login({ phone, otp });
+        response = await authApi.login({ phone, password });
       }
       
       const { token, user } = response.data;
@@ -76,7 +77,37 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error: any) {
       set({ 
         isLoading: false, 
-        error: error.response?.data?.message || 'Login failed' 
+        error: error.response?.data?.message || error.message || 'Login failed' 
+      });
+      throw error;
+    }
+  },
+
+  signup: async (data: import('../types').SignupRequest) => {
+    try {
+      set({ isLoading: true, error: null });
+      
+      let response;
+      if (USE_MOCK) {
+        response = { data: await mockApi.signup(data) };
+      } else {
+        response = await authApi.signup(data);
+      }
+      
+      const { token, user } = response.data;
+      
+      await SecureStore.setItemAsync('auth_token', token);
+      
+      set({
+        user,
+        token,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch (error: any) {
+      set({ 
+        isLoading: false, 
+        error: error.response?.data?.message || error.message || 'Signup failed' 
       });
       throw error;
     }

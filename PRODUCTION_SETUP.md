@@ -7,7 +7,7 @@
 ✅ Backend: Running on port 5000
 ✅ MongoDB: Connected
 ✅ Mock Mode: DISABLED (EXPO_PUBLIC_USE_MOCK=false)
-✅ API URL: http://192.168.137.66:5000/api
+✅ API URL: http://192.168.1.45:5000/api
 ✅ Expo: Running with production config
 ```
 
@@ -18,7 +18,7 @@
 ### **Frontend `.env`** (React Native App)
 ```env
 # Backend API URL - Your computer's IP address
-EXPO_PUBLIC_API_URL=http://192.168.137.66:5000/api
+EXPO_PUBLIC_API_URL=http://192.168.1.45:5000/api
 
 # Mock mode DISABLED for production
 EXPO_PUBLIC_USE_MOCK=false
@@ -52,7 +52,7 @@ React Native App → Real Backend (localhost:5000) → MongoDB → Real Data
 
 ### **1. Test Backend Health**
 ```bash
-curl http://192.168.137.66:5000/api/health
+curl http://192.168.1.45:5000/api/health
 ```
 
 **Expected Response:**
@@ -66,7 +66,7 @@ curl http://192.168.137.66:5000/api/health
 
 ### **2. Test OTP Endpoint**
 ```bash
-curl -X POST http://192.168.137.66:5000/api/auth/send-otp \
+curl -X POST http://192.168.1.45:5000/api/auth/send-otp \
   -H "Content-Type: application/json" \
   -d '{"phone":"9876543210"}'
 ```
@@ -102,7 +102,7 @@ Your phone **MUST** be on the **same WiFi network** as your computer.
 
 ### **Step 1: Find Your Computer's IP**
 ```bash
-# Already configured: 192.168.137.66
+# Already configured: 192.168.1.45
 # To verify:
 ip addr show | grep "inet " | grep -v 127.0.0.1
 ```
@@ -110,7 +110,7 @@ ip addr show | grep "inet " | grep -v 127.0.0.1
 ### **Step 2: Test Phone Can Reach Backend**
 On your phone's browser, open:
 ```
-http://192.168.137.66:5000/api/health
+http://192.168.1.45:5000/api/health
 ```
 
 **Should show:**
@@ -147,7 +147,7 @@ npm start
 ```
 🚀 Server running on port 5000
 📡 Local: http://localhost:5000/api
-🌐 Network: http://192.168.137.66:5000/api
+🌐 Network: http://192.168.1.45:5000/api
 📱 Use the Network URL in your React Native app .env file
 ✅ MongoDB Connected: localhost
 ```
@@ -160,7 +160,7 @@ npx expo start --clear
 
 **Should show:**
 ```
-› Metro waiting on exp://192.168.137.66:8081
+› Metro waiting on exp://192.168.1.45:8081
 › Scan the QR code above with Expo Go
 ```
 
@@ -209,11 +209,11 @@ Should show Node.js process.
 
 **Check 2: Can you reach backend from computer?**
 ```bash
-curl http://192.168.137.66:5000/api/health
+curl http://192.168.1.45:5000/api/health
 ```
 
 **Check 3: Can you reach backend from phone?**
-Open in phone browser: `http://192.168.137.66:5000/api/health`
+Open in phone browser: `http://192.168.1.45:5000/api/health`
 
 **Check 4: Firewall blocking?**
 ```bash
@@ -254,7 +254,7 @@ lsof -i :27017
 This means the backend is working but authentication failed.
 
 **Test login flow:**
-1. Send OTP: `curl -X POST http://192.168.137.66:5000/api/auth/send-otp -H "Content-Type: application/json" -d '{"phone":"9876543210"}'`
+1. Send OTP: `curl -X POST http://192.168.1.45:5000/api/auth/send-otp -H "Content-Type: application/json" -d '{"phone":"9876543210"}'`
 2. Note the OTP returned
 3. Login with that OTP in the app
 
@@ -345,7 +345,7 @@ cd ~/Documents/ewaste && npx expo start --clear
 - [x] Backend running on port 5000
 - [x] MongoDB connected
 - [x] Mock mode disabled (`EXPO_PUBLIC_USE_MOCK=false`)
-- [x] API URL set to network IP (`192.168.137.66`)
+- [x] API URL set to network IP (`192.168.1.45`)
 - [x] Backend accessible from network
 - [x] Expo running with production config
 - [ ] Test login from phone
