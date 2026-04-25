@@ -1,14 +1,15 @@
+import { API_URL } from '@/src/api/client';
 import { useAdminStore } from '@/src/store/adminStore';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 export default function AdminHomeScreen() {
@@ -66,7 +67,7 @@ export default function AdminHomeScreen() {
     try {
       setIsLoadingRequests(true);
       const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.1.45:5000/api/admin/requests', {
+      const response = await fetch(`${API_URL}/admin/requests`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -89,7 +90,7 @@ export default function AdminHomeScreen() {
   const loadVendors = async () => {
     try {
       const token = await require('expo-secure-store').getItemAsync('auth_token');
-      const response = await fetch('http://192.168.1.45:5000/api/admin/vendors', {
+      const response = await fetch(`${API_URL}/admin/vendors`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
@@ -114,7 +115,7 @@ export default function AdminHomeScreen() {
     }
 
     try {
-      const response = await fetch(`http://192.168.1.45:5000/api/admin/requests/${selectedRequest._id}/assign`, {
+      const response = await fetch(`${API_URL}/admin/requests/${selectedRequest._id}/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

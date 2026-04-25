@@ -1,87 +1,161 @@
 import { useRequestStore } from '@/src/store/requestStore';
 import { Drive } from '@/src/types';
-import React, { useEffect } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../../../constants/theme';
+import { DriveCard } from '../../../src/components/ui/DriveCard';
+import { EmptyState } from '../../../src/components/ui/EmptyState';
+
+type FilterType = 'UPCOMING' | 'ALL';
+
+const FILTERS: { key: FilterType; label: string }[] = [
+  { key: 'UPCOMING', label: 'Upcoming' },
+  { key: 'ALL', label: 'All Drives' },
+];
 
 export default function DrivesScreen() {
-  const { drives, isLoading, fetchDrives } = useRequestStore();
+  const { drives, fetchDrives, joinDrive, isLoading } = useRequestStore();
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState<FilterType>('UPCOMING');
+  const router = useRouter();
 
-  useEffect(() => {
-    fetchDrives();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadDrives();
+    }, [])
+  );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-    });
+  const loadDrives = async () => {
+    try {
+      await fetchDrives();
+    } catch (error) {
+      console.error('Failed to load drives:', error);
+    }
   };
 
-  const renderDrive = ({ item }: { item: Drive }) => {
-    const isFull = item.registeredCount >= item.capacity;
-    const percentage = (item.registeredCount / item.capacity) * 100;
-
-    return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.location}>{item.location}</Text>
-          <View style={[styles.badge, isFull ? styles.badgeFull : styles.badgeAvailable]}>
-            <Text style={styles.badgeText}>{isFull ? 'Full' : 'Available'}</Text>
-          </View>
-        </View>
-        <View style={styles.cardBody}>
-          <Text style={styles.detail}>📅 Date: {formatDate(item.date)}</Text>
-          <Text style={styles.detail}>
-            👥 Registrations: {item.registeredCount} / {item.capacity}
-          </Text>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${percentage}%`, backgroundColor: isFull ? '#e74c3c' : '#27ae60' },
-              ]}
-            />
-          </View>
-          {!isFull && (
-            <TouchableOpacity style={styles.joinButton}>
-              <Text style={styles.joinButtonText}>Join Drive</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </View>
-    );
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadDrives();
+    setRefreshing(false);
   };
 
-  if (isLoading) {
+  const handleJoinDrive = async (driveId: string) => {
+    try {
+      await joinDrive(driveId);
+      Alert.alert(
+        'Success!',
+        'You have successfully joined the drive. See you there!',
+        [{ text: 'OK' }]
+      );
+    } catch (error) {
+      Alert.alert('Error', 'Failed to join drive. Please try again.');
+    }
+  };
+
+  const filteredDrives = drives.filter(drive => {
+    if (activeFilter === 'ALL') return true;
+    
+    // Upcoming filter: show drives with date in the future
+    const driveDate = new Date(drive.date);
+    const now = new Date();
+    return driveDate > now;
+  });
+
+  if (isLoading && drives.length === 0) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#27ae60" />
+        <ActivityIndicator size="large" color={Colors.light.tint} />
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
+      {/* Filter Tabs */}
+      <View style={styles.filterContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.filterScroll}
+        >
+          {FILTERS.map(filter => (
+            <TouchableOpacity
+              key={filter.key}
+              style={[
+                styles.filterTab,
+                activeFilter === filter.key && styles.filterTabActive,
+              ]}
+              onPress={() => setActiveFilter(filter.key)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  activeFilter === filter.key && styles.filterTextActive,
+                ]}
+              >
+                {filter.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+
+      {/* Info Banner */}
+      <View style={styles.infoBanner}>
+        <Ionicons name="information-circle-outline" size={18} color={Colors.light.tint} />
+        <Text style={styles.infoText}>
+          Join community drives to drop off your e-waste at designated collection points
+        </Text>
+      </View>
+
+      {/* Drives List */}
       <FlatList
-        data={drives}
-        renderItem={renderDrive}
+        data={filteredDrives}
+        renderItem={({ item }) => (
+          <DriveCard
+            drive={item}
+            onJoin={() => handleJoinDrive(item.id)}
+          />
+        )}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.list}
+        contentContainerStyle={styles.listContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={Colors.light.tint}
+          />
+        }
         ListEmptyComponent={
-          <View style={styles.empty}>
-            <Text style={styles.emptyText}>No upcoming drives</Text>
-            <Text style={styles.emptySubtext}>
-              Check back later for community e-waste drives
-            </Text>
+          <View style={styles.emptyContainer}>
+            <EmptyState
+              icon="calendar-outline"
+              title={
+                activeFilter === 'UPCOMING'
+                  ? 'No upcoming drives'
+                  : `No ${activeFilter.toLowerCase().replace('_', ' ')} drives`
+              }
+              description={
+                activeFilter === 'UPCOMING'
+                  ? 'Check back later for community e-waste collection drives in your area!'
+                  : `You haven't joined any drives yet.`
+              }
+              actionLabel={activeFilter === 'UPCOMING' ? 'Check Back Later' : undefined}
+              onAction={activeFilter === 'UPCOMING' ? onRefresh : undefined}
+            />
           </View>
         }
       />
@@ -92,101 +166,62 @@ export default function DrivesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.light.background,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  list: {
-    padding: 16,
-  },
-  card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    paddingBottom: 12,
+  filterContainer: {
+    backgroundColor: Colors.light.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: Colors.light.border,
   },
-  location: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
+  filterScroll: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    gap: Spacing.sm,
+  },
+  filterTab: {
+    paddingHorizontal: Spacing.lg,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    backgroundColor: Colors.light.background,
+  },
+  filterTabActive: {
+    backgroundColor: Colors.light.tint,
+  },
+  filterText: {
+    fontSize: FontSizes.sm,
+    fontWeight: '500',
+    color: Colors.light.muted,
+  },
+  filterTextActive: {
+    color: '#FFFFFF',
+  },
+  infoBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${Colors.light.tint}10`,
+    padding: Spacing.md,
+    marginHorizontal: Spacing.lg,
+    marginTop: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.sm,
+  },
+  infoText: {
     flex: 1,
+    fontSize: FontSizes.sm,
+    color: Colors.light.tint,
+    lineHeight: 18,
   },
-  badge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
+  listContent: {
+    padding: Spacing.lg,
+    paddingBottom: Spacing.xxxl,
+    flexGrow: 1,
   },
-  badgeAvailable: {
-    backgroundColor: '#27ae60',
-  },
-  badgeFull: {
-    backgroundColor: '#e74c3c',
-  },
-  badgeText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  cardBody: {
-    padding: 16,
-    paddingTop: 12,
-    gap: 10,
-  },
-  detail: {
-    fontSize: 14,
-    color: '#7f8c8d',
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#ecf0f1',
-    borderRadius: 4,
-    overflow: 'hidden',
-    marginTop: 4,
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  joinButton: {
-    backgroundColor: '#27ae60',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  joinButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  empty: {
-    alignItems: 'center',
-    marginTop: 60,
-  },
-  emptyText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
-  },
-  emptySubtext: {
-    fontSize: 14,
-    color: '#7f8c8d',
-    marginTop: 8,
+  emptyContainer: {
+    flex: 1,
   },
 });

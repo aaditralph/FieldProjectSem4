@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { auditApi, driveApi, requestApi } from '../api/endpoints';
 import { mockApi } from '../api/mock';
 import { AuditLog, CreateRequestPayload, Drive, Request, SchedulePayload } from '../types';
+import { RequestStatus } from '../types/enums';
 
 interface RequestState {
   requests: Request[];
@@ -10,6 +11,12 @@ interface RequestState {
   auditLogs: AuditLog[];
   isLoading: boolean;
   error: string | null;
+  
+  // Stats
+  totalRecycled: number;
+  co2Saved: number;
+  activeCount: number;
+  completedCount: number;
   
   fetchRequests: () => Promise<void>;
   fetchRequestById: (id: string) => Promise<void>;
@@ -24,6 +31,23 @@ interface RequestState {
 
 const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
 
+// Calculate eco-impact stats from requests
+const calculateStats = (requests: Request[]) => {
+  const active = requests.filter(r =>
+    r.status === RequestStatus.CREATED ||
+    r.status === RequestStatus.SCHEDULED ||
+    r.status === RequestStatus.IN_PROGRESS
+  ).length;
+  const completed = requests.filter(r => r.status === RequestStatus.COMPLETED).length;
+
+  // Mock calculation: estimate ~2kg per completed request
+  const totalRecycled = completed * 2;
+  // CO2 saved: approx 0.5kg per kg of e-waste recycled
+  const co2Saved = totalRecycled * 0.5;
+
+  return { activeCount: active, completedCount: completed, totalRecycled, co2Saved };
+};
+
 export const useRequestStore = create<RequestState>((set, get) => ({
   requests: [],
   currentRequest: null,
@@ -31,6 +55,10 @@ export const useRequestStore = create<RequestState>((set, get) => ({
   auditLogs: [],
   isLoading: false,
   error: null,
+  totalRecycled: 0,
+  co2Saved: 0,
+  activeCount: 0,
+  completedCount: 0,
 
   fetchRequests: async () => {
     try {
@@ -43,7 +71,15 @@ export const useRequestStore = create<RequestState>((set, get) => ({
         response = await requestApi.getAll();
       }
       
-      set({ requests: response.data, isLoading: false });
+      const stats = calculateStats(response.data);
+      set({ 
+        requests: response.data, 
+        isLoading: false,
+        totalRecycled: stats.totalRecycled,
+        co2Saved: stats.co2Saved,
+        activeCount: stats.activeCount,
+        completedCount: stats.completedCount,
+      });
     } catch (error: any) {
       set({
         isLoading: false,

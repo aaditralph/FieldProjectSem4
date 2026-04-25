@@ -1,16 +1,17 @@
+import { API_URL } from '@/src/api/client';
 import { useVendorStore } from '@/src/store/vendorStore';
 import { Condition, Pickup, Request } from '@/src/types';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    Modal,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Modal,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 type PickupWithRequest = Pickup & { request: Request };
@@ -40,13 +41,13 @@ export default function VendorHomeScreen() {
           text: 'Accept',
           onPress: async () => {
             try {
-              const token = await require('expo-secure-store').getItemAsync('auth_token');
-              const response = await fetch(`http://192.168.1.45:5000/api/vendor/pickups/${pickupId}/accept`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                },
-              });
+const token = await require('expo-secure-store').getItemAsync('auth_token');
+                    const response = await fetch(`${API_URL}/vendor/pickups/${pickupId}/accept`, {
+                      method: 'POST',
+                      headers: {
+                        'Authorization': `Bearer ${token}`,
+                      },
+                    });
               
               if (!response.ok) {
                 const error = await response.json();

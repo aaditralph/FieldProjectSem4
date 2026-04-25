@@ -69,7 +69,7 @@ const mockDrives: Drive[] = [
   {
     id: 'drive1',
     location: 'Community Center, Andheri',
-    date: '2024-12-25',
+    date: new Date(Date.now() + 7 * 86400000).toISOString(),
     capacity: 100,
     registeredCount: 45,
     createdAt: new Date().toISOString(),
@@ -77,9 +77,17 @@ const mockDrives: Drive[] = [
   {
     id: 'drive2',
     location: 'Municipal Office, Bandra',
-    date: '2024-12-28',
+    date: new Date(Date.now() + 14 * 86400000).toISOString(),
     capacity: 150,
     registeredCount: 80,
+    createdAt: new Date().toISOString(),
+  },
+  {
+    id: 'drive3',
+    location: 'Cultural Complex, Dadar',
+    date: new Date(Date.now() + 21 * 86400000).toISOString(),
+    capacity: 200,
+    registeredCount: 120,
     createdAt: new Date().toISOString(),
   },
 ];

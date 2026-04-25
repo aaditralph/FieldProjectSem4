@@ -3,239 +3,448 @@ import { Category } from '@/src/types';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Colors, FontSizes, Spacing, BorderRadius } from '../../../constants/theme';
+import { CategoryCard } from '../../../src/components/ui/CategoryCard';
+
+const CATEGORIES = Object.values(Category);
+
+type PickupType = 'HOME_PICKUP' | 'DRIVE';
+type Step = 'type' | 'category' | 'details' | 'address';
 
 export default function CreateRequestScreen() {
-  const [category, setCategory] = useState<Category>(Category.MOBILE);
-  const [quantity, setQuantity] = useState('');
+  const [pickupType, setPickupType] = useState<PickupType | null>(null);
+  const [category, setCategory] = useState<Category | null>(null);
+  const [quantity, setQuantity] = useState(1);
   const [address, setAddress] = useState('');
-  const [type, setType] = useState<'HOME_PICKUP' | 'DRIVE'>('HOME_PICKUP');
-  
-  const { createRequest, isLoading, error, clearError } = useRequestStore();
+  const [driveDate, setDriveDate] = useState('');
+  const [step, setStep] = useState<Step>('type');
+
+  const { createRequest, isLoading, clearError } = useRequestStore();
   const router = useRouter();
 
-  const handleSubmit = async () => {
-    if (!quantity || parseInt(quantity) < 1) {
-      Alert.alert('Invalid Quantity', 'Please enter a valid quantity');
-      return;
-    }
+  const resetForm = () => {
+    setPickupType(null);
+    setCategory(null);
+    setQuantity(1);
+    setAddress('');
+    setDriveDate('');
+    setStep('type');
+  };
 
-    if (!address.trim()) {
-      Alert.alert('Missing Address', 'Please enter pickup address');
+  const handleSubmit = async () => {
+    if (!pickupType || !category) {
+      Alert.alert('Error', 'Please complete all required fields');
       return;
     }
 
     try {
       clearError();
-      await createRequest({
-        category,
-        quantity: parseInt(quantity),
-        address: address.trim(),
-        type,
-      });
-      
-      Alert.alert('Success', 'Request created successfully!', [
-        { text: 'OK', onPress: () => router.back() },
-      ]);
+
+      if (pickupType === 'DRIVE') {
+        // For community drive: address and date are required
+        if (!address.trim()) {
+          Alert.alert('Error', 'Please enter a location for the community drive');
+          return;
+        }
+        if (!driveDate.trim()) {
+          Alert.alert('Error', 'Please enter a preferred date for the community drive');
+          return;
+        }
+
+        await createRequest({
+          category,
+          quantity: 1,
+          address: address.trim(),
+          type: pickupType,
+          scheduledTime: driveDate,
+        });
+      } else {
+        // For home pickup: address is required
+        if (!address.trim()) {
+          Alert.alert('Error', 'Please enter your pickup address');
+          return;
+        }
+
+        await createRequest({
+          category,
+          quantity,
+          address: address.trim(),
+          type: pickupType,
+        });
+      }
+
+      Alert.alert(
+        'Success!',
+        pickupType === 'DRIVE'
+          ? 'Community drive request submitted! BMC will review and contact you with an OTP once approved.'
+          : 'Request created! A vendor will contact you shortly.',
+        [{
+          text: 'OK',
+          onPress: () => {
+            resetForm();
+            router.replace('/(tabs)/citizen/requests');
+          }
+        }]
+      );
     } catch (err: any) {
-      Alert.alert('Error', error || 'Failed to create request');
+      Alert.alert('Error', err?.message || 'Failed to create request');
     }
   };
 
-  return (
-    <ScrollView style={styles.container}>
-      <View style={styles.form}>
-        <Text style={styles.label}>Category</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
-          {Object.values(Category).map((cat) => (
-            <TouchableOpacity
-              key={cat}
-              style={[
-                styles.categoryChip,
-                category === cat && styles.categoryChipActive,
-              ]}
-              onPress={() => setCategory(cat)}
-            >
-              <Text
-                style={[
-                  styles.categoryText,
-                  category === cat && styles.categoryTextActive,
-                ]}
+  const goBack = () => {
+    if (step === 'address') {
+      setStep('details');
+    } else if (step === 'details') {
+      setStep('category');
+    } else if (step === 'category') {
+      resetForm();
+    } else {
+      router.back();
+    }
+  };
+
+  const handlePickupTypeSelect = (type: PickupType) => {
+    setPickupType(type);
+    setStep('category');
+  };
+
+  const handleCategorySelect = (cat: Category) => {
+    setCategory(cat);
+    setStep('details');
+  };
+
+  const incrementQuantity = () => setQuantity(q => Math.min(10, q + 1));
+  const decrementQuantity = () => setQuantity(q => Math.max(1, q - 1));
+
+  const handleContinueToAddress = () => {
+    setStep('address');
+  };
+
+  // Step 1: Pickup Type
+  if (step === 'type') {
+    return (
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepTitle}>How would you like to drop off?</Text>
+            <Text style={styles.stepSubtitle}>Choose your preferred method</Text>
+
+            <View style={styles.typeContainer}>
+              <TouchableOpacity
+                style={[styles.typeButton, pickupType === 'HOME_PICKUP' && styles.typeButtonActive]}
+                onPress={() => handlePickupTypeSelect('HOME_PICKUP')}
+                activeOpacity={0.7}
               >
-                {cat}
-              </Text>
-            </TouchableOpacity>
-          ))}
+                <View style={[styles.typeIconContainer, pickupType === 'HOME_PICKUP' && styles.typeIconContainerActive]}>
+                  <Ionicons name="car-outline" size={28} color={pickupType === 'HOME_PICKUP' ? '#FFFFFF' : Colors.light.tint} />
+                </View>
+                <Text style={[styles.typeLabel, pickupType === 'HOME_PICKUP' && styles.typeLabelActive]}>Home Pickup</Text>
+                <Text style={styles.typeDescription}>We collect from your address</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.typeButton, pickupType === 'DRIVE' && styles.typeButtonActive]}
+                onPress={() => handlePickupTypeSelect('DRIVE')}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.typeIconContainer, pickupType === 'DRIVE' && styles.typeIconContainerActive]}>
+                  <Ionicons name="people-outline" size={28} color={pickupType === 'DRIVE' ? '#FFFFFF' : Colors.light.tint} />
+                </View>
+                <Text style={[styles.typeLabel, pickupType === 'DRIVE' && styles.typeLabelActive]}>Community Drive</Text>
+                <Text style={styles.typeDescription}>Request a new drive in your area</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
 
-        <Text style={styles.label}>Quantity (number of items)</Text>
-        <TextInput
-          style={styles.input}
-          placeholder="e.g., 2"
-          keyboardType="number-pad"
-          value={quantity}
-          onChangeText={setQuantity}
-        />
+  // Step 2: Category
+  if (step === 'category') {
+    return (
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepTitle}>What do you want to recycle?</Text>
+            <Text style={styles.stepSubtitle}>Select a category</Text>
 
-        <Text style={styles.label}>Pickup Address</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Enter your complete address"
-          value={address}
-          onChangeText={setAddress}
-          multiline
-          numberOfLines={3}
-        />
+            <TouchableOpacity style={styles.backButtonSmall} onPress={resetForm}>
+              <Ionicons name="arrow-back" size={18} color={Colors.light.muted} />
+              <Text style={styles.backButtonTextSmall}>Back to pickup type</Text>
+            </TouchableOpacity>
 
-        <Text style={styles.label}>Request Type</Text>
-        <View style={styles.typeContainer}>
-          <TouchableOpacity
-            style={[
-              styles.typeButton,
-              type === 'HOME_PICKUP' && styles.typeButtonActive,
-            ]}
-            onPress={() => setType('HOME_PICKUP')}
-          >
-            <Text
-              style={[
-                styles.typeText,
-                type === 'HOME_PICKUP' && styles.typeTextActive,
-              ]}
-            >
-              Home Pickup
-            </Text>
+            <View style={styles.categoryGrid}>
+              {CATEGORIES.map(cat => (
+                <CategoryCard
+                  key={cat}
+                  category={cat}
+                  selected={category === cat}
+                  onPress={() => handleCategorySelect(cat)}
+                />
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // Step 3: Details (Quantity for Home Pickup, just Continue button for Drive)
+  if (step === 'details') {
+    return (
+      <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+          <View style={styles.stepContainer}>
+            {pickupType === 'HOME_PICKUP' ? (
+              <>
+                <Text style={styles.stepTitle}>How many items?</Text>
+                <Text style={styles.stepSubtitle}>Select quantity</Text>
+
+                <TouchableOpacity style={styles.backButtonSmall} onPress={goBack}>
+                  <Ionicons name="arrow-back" size={18} color={Colors.light.muted} />
+                  <Text style={styles.backButtonTextSmall}>Back to category</Text>
+                </TouchableOpacity>
+
+                <View style={styles.quantityContainer}>
+                  <TouchableOpacity
+                    style={[styles.quantityButton, quantity <= 1 && styles.quantityButtonDisabled]}
+                    onPress={decrementQuantity}
+                    disabled={quantity <= 1}
+                  >
+                    <Ionicons name="remove" size={24} color={quantity <= 1 ? Colors.light.muted : Colors.light.tint} />
+                  </TouchableOpacity>
+
+                  <View style={styles.quantityValue}>
+                    <Text style={styles.quantityNumber}>{quantity}</Text>
+                    <Text style={styles.quantityLabel}>item(s)</Text>
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.quantityButton, quantity >= 10 && styles.quantityButtonDisabled]}
+                    onPress={incrementQuantity}
+                    disabled={quantity >= 10}
+                  >
+                    <Ionicons name="add" size={24} color={quantity >= 10 ? Colors.light.muted : Colors.light.tint} />
+                  </TouchableOpacity>
+                </View>
+
+                <TouchableOpacity style={styles.nextButton} onPress={handleContinueToAddress}>
+                  <Text style={styles.nextButtonText}>Continue to Address</Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <Text style={styles.stepTitle}>Community Drive Request</Text>
+                <Text style={styles.stepSubtitle}>You're requesting BMC to organize a drive</Text>
+
+                <TouchableOpacity style={styles.backButtonSmall} onPress={goBack}>
+                  <Ionicons name="arrow-back" size={18} color={Colors.light.muted} />
+                  <Text style={styles.backButtonTextSmall}>Back to category</Text>
+                </TouchableOpacity>
+
+                <View style={styles.infoCard}>
+                  <Ionicons name="information-circle-outline" size={24} color={Colors.light.tint} />
+                  <Text style={styles.infoText}>
+                    You'll need to provide a location and preferred date. BMC will review your request and send an OTP once approved.
+                  </Text>
+                </View>
+
+                <TouchableOpacity style={styles.nextButton} onPress={handleContinueToAddress}>
+                  <Text style={styles.nextButtonText}>Continue</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    );
+  }
+
+  // Step 4: Address (for Home Pickup) or Address + Date (for Community Drive)
+  return (
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
+        <View style={styles.stepContainer}>
+          {pickupType === 'HOME_PICKUP' ? (
+            <>
+              <Text style={styles.stepTitle}>Pickup address</Text>
+              <Text style={styles.stepSubtitle}>Where should we collect from?</Text>
+            </>
+          ) : (
+            <>
+              <Text style={styles.stepTitle}>Community Drive Details</Text>
+              <Text style={styles.stepSubtitle}>Enter location and preferred date</Text>
+            </>
+          )}
+
+          <TouchableOpacity style={styles.backButtonSmall} onPress={goBack}>
+            <Ionicons name="arrow-back" size={18} color={Colors.light.muted} />
+            <Text style={styles.backButtonTextSmall}>Back</Text>
           </TouchableOpacity>
+
+          {pickupType === 'DRIVE' && (
+            <>
+              <Text style={styles.inputLabel}>Drive Location</Text>
+              <TextInput
+                style={styles.addressInput}
+                placeholder="Enter the location where you want the drive to be organized"
+                placeholderTextColor={Colors.light.muted}
+                value={address}
+                onChangeText={setAddress}
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+
+              <Text style={styles.inputLabel}>Preferred Date</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="DD/MM/YYYY (e.g., 25/12/2024)"
+                placeholderTextColor={Colors.light.muted}
+                value={driveDate}
+                onChangeText={setDriveDate}
+              />
+            </>
+          )}
+
+          {pickupType === 'HOME_PICKUP' && (
+            <TextInput
+              style={styles.addressInput}
+              placeholder="Enter your complete address"
+              placeholderTextColor={Colors.light.muted}
+              value={address}
+              onChangeText={setAddress}
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          )}
+
           <TouchableOpacity
-            style={[
-              styles.typeButton,
-              type === 'DRIVE' && styles.typeButtonActive,
-            ]}
-            onPress={() => setType('DRIVE')}
+            style={[styles.submitButton, (!address.trim() || isLoading) && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={!address.trim() || isLoading}
           >
-            <Text
-              style={[
-                styles.typeText,
-                type === 'DRIVE' && styles.typeTextActive,
-              ]}
-            >
-              Community Drive
-            </Text>
+            {isLoading ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <>
+                <Ionicons name="leaf-outline" size={18} color="#FFFFFF" />
+                <Text style={styles.submitButtonText}>Submit Request</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
-
-        <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>Create Request</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-  },
-  form: {
-    padding: 20,
-    gap: 16,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#2c3e50',
-    marginBottom: 8,
-  },
-  categoryScroll: {
-    marginBottom: 8,
-  },
-  categoryChip: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginRight: 8,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-  },
-  categoryChipActive: {
-    backgroundColor: '#27ae60',
-    borderColor: '#27ae60',
-  },
-  categoryText: {
-    fontSize: 14,
-    color: '#7f8c8d',
-  },
-  categoryTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-    borderRadius: 8,
-    padding: 16,
-    fontSize: 16,
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: 'top',
-  },
-  typeContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  container: { flex: 1, backgroundColor: Colors.light.background },
+  scrollView: { flex: 1 },
+  contentContainer: { padding: Spacing.lg, paddingBottom: Spacing.xxxl },
+
+  stepContainer: { marginBottom: Spacing.xl },
+  stepTitle: { fontSize: FontSizes.xl, fontWeight: '700', color: Colors.light.text, marginBottom: Spacing.xs },
+  stepSubtitle: { fontSize: FontSizes.md, color: Colors.light.muted, marginBottom: Spacing.xl },
+
+  typeContainer: { flexDirection: 'row', gap: Spacing.md, marginBottom: Spacing.xl },
   typeButton: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    flex: 1, backgroundColor: Colors.light.surface, borderRadius: BorderRadius.lg,
+    padding: Spacing.xl, alignItems: 'center', borderWidth: 2, borderColor: 'transparent',
+  },
+  typeButtonActive: { borderColor: Colors.light.tint, backgroundColor: `${Colors.light.tint}10` },
+  typeIconContainer: {
+    width: 56, height: 56, borderRadius: 28, backgroundColor: Colors.light.background,
+    alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.md,
+  },
+  typeIconContainerActive: { backgroundColor: Colors.light.tint },
+  typeLabel: { fontSize: FontSizes.lg, fontWeight: '600', color: Colors.light.text, marginBottom: Spacing.xs },
+  typeLabelActive: { color: Colors.light.tint },
+  typeDescription: { fontSize: FontSizes.sm, color: Colors.light.muted },
+
+  categoryGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+
+  quantityContainer: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: Colors.light.surface, borderRadius: BorderRadius.lg, padding: Spacing.xl, marginBottom: Spacing.xl,
+  },
+  quantityButton: {
+    width: 56, height: 56, borderRadius: 28, backgroundColor: `${Colors.light.tint}15`,
+    alignItems: 'center', justifyContent: 'center',
+  },
+  quantityButtonDisabled: { backgroundColor: Colors.light.background },
+  quantityValue: { alignItems: 'center', marginHorizontal: Spacing.xxl },
+  quantityNumber: { fontSize: 56, fontWeight: '700', color: Colors.light.text },
+  quantityLabel: { fontSize: FontSizes.lg, color: Colors.light.muted },
+
+  addressInput: {
+    backgroundColor: Colors.light.surface, borderRadius: BorderRadius.lg, padding: Spacing.lg,
+    fontSize: FontSizes.md, color: Colors.light.text, minHeight: 120, marginBottom: Spacing.xl,
+    borderWidth: 1, borderColor: Colors.light.border,
+  },
+
+  inputLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: '600',
+    color: Colors.light.text,
+    marginBottom: Spacing.sm,
+  },
+
+  textInput: {
+    backgroundColor: Colors.light.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    fontSize: FontSizes.md,
+    color: Colors.light.text,
+    marginBottom: Spacing.xl,
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    alignItems: 'center',
+    borderColor: Colors.light.border,
   },
-  typeButtonActive: {
-    backgroundColor: '#27ae60',
-    borderColor: '#27ae60',
+
+  backButtonSmall: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.lg },
+  backButtonTextSmall: { fontSize: FontSizes.sm, color: Colors.light.muted },
+
+  nextButton: {
+    padding: Spacing.lg, borderRadius: BorderRadius.md, alignItems: 'center', backgroundColor: Colors.light.tint,
   },
-  typeText: {
-    fontSize: 14,
-    color: '#7f8c8d',
-  },
-  typeTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
+  nextButtonText: { fontSize: FontSizes.md, fontWeight: '600', color: '#FFFFFF' },
+
   submitButton: {
-    backgroundColor: '#27ae60',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
+    padding: Spacing.lg, borderRadius: BorderRadius.md, alignItems: 'center', backgroundColor: Colors.light.tint,
+    flexDirection: 'row', justifyContent: 'center', gap: Spacing.sm,
   },
-  submitButtonDisabled: {
-    opacity: 0.6,
+  submitButtonDisabled: { opacity: 0.5 },
+  submitButtonText: { fontSize: FontSizes.md, fontWeight: '600', color: '#FFFFFF' },
+
+  // Community Drive specific
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: `${Colors.light.tint}10`,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+    gap: Spacing.sm,
   },
-  submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+  infoText: {
+    flex: 1,
+    fontSize: FontSizes.sm,
+    color: Colors.light.text,
+    lineHeight: 20,
   },
 });
