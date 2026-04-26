@@ -73,15 +73,15 @@ export default function CitizenTabs() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="requests"
-        options={{
-          title: 'Requests',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="list-outline" size={size} color={color} />
-          ),
-        }}
-      />
+       <Tabs.Screen
+         name="requests"
+         options={{
+           title: 'Home Visits',
+           tabBarIcon: ({ color, size }) => (
+             <Ionicons name="home-outline" size={size} color={color} />
+           ),
+         }}
+       />
       <Tabs.Screen
         name="create"
         options={{

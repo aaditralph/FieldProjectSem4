@@ -48,24 +48,33 @@ export default function AdminTabs() {
         ),
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="stats-chart-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="pricing"
-        options={{
-          title: 'Pricing',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="pricetag-outline" size={size} color={color} />
-          ),
-        }}
-      />
+       <Tabs.Screen
+         name="index"
+         options={{
+           title: 'Dashboard',
+           tabBarIcon: ({ color, size }) => (
+             <Ionicons name="stats-chart-outline" size={size} color={color} />
+           ),
+         }}
+       />
+       <Tabs.Screen
+         name="drive-requests"
+         options={{
+           title: 'Drive Requests',
+           tabBarIcon: ({ color, size }) => (
+             <Ionicons name="clipboard-outline" size={size} color={color} />
+           ),
+         }}
+       />
+       <Tabs.Screen
+         name="pricing"
+         options={{
+           title: 'Pricing',
+           tabBarIcon: ({ color, size }) => (
+             <Ionicons name="pricetag-outline" size={size} color={color} />
+           ),
+         }}
+       />
       <Tabs.Screen
         name="reports"
         options={{

@@ -1,12 +1,13 @@
 const Drive = require('../models/Drive');
 const AuditLog = require('../models/AuditLog');
+const mongoose = require('mongoose');
 
 // @desc    Get all drives
 // @route   GET /drives
 // @access  Public
 const getDrives = async (req, res) => {
   try {
-    const drives = await Drive.find()
+    const drives = await Drive.find({ completed: false })
       .sort({ date: 1 });
 
     res.json(drives);
@@ -22,6 +23,11 @@ const getDrives = async (req, res) => {
 const createDrive = async (req, res) => {
   try {
     const { location, date, capacity } = req.body;
+
+    // Validate date is in the future
+    if (new Date(date) < new Date()) {
+      return res.status(400).json({ message: 'Drive date must be in the future' });
+    }
 
     const drive = await Drive.create({
       location,
@@ -55,20 +61,25 @@ const joinDrive = async (req, res) => {
       return res.status(404).json({ message: 'Drive not found' });
     }
 
-    // Check if already joined
-    if (drive.registeredUsers.includes(req.user.id)) {
+    // Check capacity and prevent duplicate join atomically
+    const result = await Drive.findOneAndUpdate(
+      { 
+        _id: req.params.id, 
+        registeredCount: { $lt: drive.capacity }, 
+        registeredUsers: { $ne: req.user.id } 
+      },
+      { $inc: { registeredCount: 1 }, $push: { registeredUsers: req.user.id } },
+      { new: true }
+    );
+
+    if (!result) {
+      // Determine if full or already joined
+      const current = await Drive.findById(req.params.id);
+      if (current.registeredCount >= current.capacity) {
+        return res.status(400).json({ message: 'Drive is full' });
+      }
       return res.status(400).json({ message: 'Already registered for this drive' });
     }
-
-    // Check capacity
-    if (drive.registeredCount >= drive.capacity) {
-      return res.status(400).json({ message: 'Drive is full' });
-    }
-
-    // Add user to drive
-    drive.registeredUsers.push(req.user.id);
-    drive.registeredCount += 1;
-    await drive.save();
 
     // Log action
     await AuditLog.create({
@@ -78,7 +89,7 @@ const joinDrive = async (req, res) => {
       meta: { driveId: drive._id },
     });
 
-    res.json(drive);
+    res.json(result);
   } catch (error) {
     console.error('Join drive error:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -99,7 +110,12 @@ const updateDrive = async (req, res) => {
     }
 
     if (location) drive.location = location;
-    if (date) drive.date = date;
+    if (date) {
+      if (new Date(date) < new Date()) {
+        return res.status(400).json({ message: 'Drive date must be in the future' });
+      }
+      drive.date = date;
+    }
     if (capacity) drive.capacity = capacity;
 
     await drive.save();

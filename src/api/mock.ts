@@ -48,6 +48,7 @@ const mockRequests: Request[] = [
     quantity: 2,
     address: '123 Main St, Mumbai',
     status: RequestStatus.CREATED,
+    type: 'HOME_PICKUP',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   },
@@ -58,10 +59,21 @@ const mockRequests: Request[] = [
     quantity: 1,
     address: '123 Main St, Mumbai',
     status: RequestStatus.SCHEDULED,
+    type: 'HOME_PICKUP',
     scheduledTime: '2024-12-20T10:00:00Z',
     createdAt: new Date(Date.now() - 86400000).toISOString(),
     updatedAt: new Date().toISOString(),
     otp: '1234',
+  },
+  {
+    id: 'drivereq1',
+    userId: '1',
+    address: 'Community Center, Kandivali',
+    scheduledTime: new Date(Date.now() + 3 * 86400000).toISOString(),
+    status: RequestStatus.CREATED,
+    type: 'DRIVE',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   },
 ];
 
@@ -72,6 +84,11 @@ const mockDrives: Drive[] = [
     date: new Date(Date.now() + 7 * 86400000).toISOString(),
     capacity: 100,
     registeredCount: 45,
+    registeredUsers: ['1'],
+    assignedVendorId: '2',
+    creatorId: '1',
+    otp: '1234',
+    completed: false,
     createdAt: new Date().toISOString(),
   },
   {
@@ -80,6 +97,11 @@ const mockDrives: Drive[] = [
     date: new Date(Date.now() + 14 * 86400000).toISOString(),
     capacity: 150,
     registeredCount: 80,
+    registeredUsers: ['1', '2'],
+    assignedVendorId: '2',
+    creatorId: '1',
+    otp: '5678',
+    completed: false,
     createdAt: new Date().toISOString(),
   },
   {
@@ -88,6 +110,11 @@ const mockDrives: Drive[] = [
     date: new Date(Date.now() + 21 * 86400000).toISOString(),
     capacity: 200,
     registeredCount: 120,
+    registeredUsers: ['1','2','3'],
+    assignedVendorId: '2',
+    creatorId: '1',
+    otp: '9999',
+    completed: false,
     createdAt: new Date().toISOString(),
   },
 ];
@@ -142,11 +169,17 @@ export const mockApi = {
   // Requests
   createRequest: async (data: any) => {
     await delay(500);
+    const requestType: 'HOME_PICKUP' | 'DRIVE' = data.type || 'HOME_PICKUP';
     const newRequest: Request = {
       id: `req${Date.now()}`,
       userId: '1',
-      ...data,
+      category: data.category || Category.OTHER,
+      quantity: data.quantity || 1,
+      address: data.address,
+      type: requestType,
       status: RequestStatus.CREATED,
+      scheduledTime: data.scheduledTime,
+      driveId: data.driveId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -206,11 +239,85 @@ export const mockApi = {
     await delay(500);
     const drive = mockDrives.find(d => d.id === id);
     if (!drive) throw new Error('Drive not found');
+    if (!drive.registeredUsers) drive.registeredUsers = [];
+    const userId = '1'; // mock: current user is '1'
+    if (drive.registeredUsers.includes(userId)) {
+      throw new Error('Already registered for this drive');
+    }
     if (drive.registeredCount >= drive.capacity) {
       throw new Error('Drive is full');
     }
+    drive.registeredUsers.push(userId);
     drive.registeredCount += 1;
     return drive;
+  },
+
+  // Vendor drives
+  getVendorDrives: async () => {
+    await delay(300);
+    const vendorId = '2'; // mock: current vendor is '2'
+    return mockDrives.filter(d => d.assignedVendorId === vendorId && !d.completed);
+  },
+  completeDrive: async (id: string, data: { otp: string }) => {
+    await delay(500);
+    const drive = mockDrives.find(d => d.id === id);
+    if (!drive) throw new Error('Drive not found');
+    if (drive.otp !== data.otp) {
+      throw new Error('Invalid OTP');
+    }
+    drive.completed = true;
+    drive.completedAt = new Date();
+    return drive;
+  },
+  completeDrive: async (id: string) => {
+    await delay(500);
+    const drive = mockDrives.find(d => d.id === id);
+    if (!drive) throw new Error('Drive not found');
+    drive.completed = true;
+    drive.completedAt = new Date().toISOString();
+    return drive;
+  },
+
+  // Drive request admin functions
+  getDriveRequests: async () => {
+    await delay(300);
+    return mockRequests.filter(r => r.type === 'DRIVE');
+  },
+  approveDriveRequest: async (id: string, vendorId: string) => {
+    await delay(500);
+    const req = mockRequests.find(r => r.id === id);
+    if (!req) throw new Error('Request not found');
+    if (req.type !== 'DRIVE') throw new Error('Not a drive request');
+    if (req.status !== 'CREATED') throw new Error('Drive request cannot be approved');
+
+    // Create drive
+    const drive: Drive = {
+      id: `drive${Date.now()}`,
+      location: req.address,
+      date: req.scheduledTime,
+      capacity: 100,
+      registeredCount: 1,
+      registeredUsers: [req.userId],
+      assignedVendorId: vendorId,
+      createdAt: new Date().toISOString(),
+    };
+    mockDrives.push(drive);
+
+    // Update request
+    req.driveId = drive.id;
+    req.assignedVendorId = vendorId;
+    req.status = 'SCHEDULED';
+
+    return drive;
+  },
+  rejectDriveRequest: async (id: string) => {
+    await delay(500);
+    const req = mockRequests.find(r => r.id === id);
+    if (!req) throw new Error('Request not found');
+    if (req.type !== 'DRIVE') throw new Error('Not a drive request');
+    if (req.status !== 'CREATED') throw new Error('Drive request cannot be rejected');
+    req.status = 'REJECTED';
+    return req;
   },
 
   // Vendor

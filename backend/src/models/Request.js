@@ -8,7 +8,6 @@ const requestSchema = new mongoose.Schema({
   },
   category: {
     type: String,
-    required: [true, 'Category is required'],
     enum: [
       'Mobile Phone',
       'Laptop',
@@ -18,6 +17,13 @@ const requestSchema = new mongoose.Schema({
       'Battery',
       'Other Electronics',
     ],
+    // Required for HOME_PICKUP; optional for DRIVE (defaults to 'Other Electronics')
+    required: function () {
+      return this.type === 'HOME_PICKUP';
+    },
+    default: function () {
+      return this.type === 'DRIVE' ? 'Other Electronics' : undefined;
+    },
   },
   quantity: {
     type: Number,
@@ -30,7 +36,7 @@ const requestSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['CREATED', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'],
+    enum: ['CREATED', 'SCHEDULED', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED', 'APPROVED', 'REJECTED'],
     default: 'CREATED',
   },
   scheduledTime: {
@@ -70,5 +76,19 @@ requestSchema.pre('save', function(next) {
   this.updatedAt = Date.now();
   next();
 });
+
+// Virtual for frontend compatibility
+requestSchema.virtual('id').get(function() {
+  return this._id.toString();
+});
+
+// Ensure virtuals are included in JSON
+requestSchema.set('toJSON', { virtuals: true });
+
+// Indexes for performance
+requestSchema.index({ userId: 1 });
+requestSchema.index({ type: 1 });
+requestSchema.index({ status: 1 });
+requestSchema.index({ driveId: 1 });
 
 module.exports = mongoose.model('Request', requestSchema);

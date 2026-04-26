@@ -1,162 +1,241 @@
-# Graph Report - FieldProjectSem4  (2026-04-25)
+# Graph Report - .  (2026-04-25)
 
 ## Corpus Check
-- 72 files · ~70,180 words
+- 101 files · ~74,578 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 228 nodes · 209 edges · 18 communities detected
-- Extraction: 76% EXTRACTED · 24% INFERRED · 0% AMBIGUOUS · INFERRED: 51 edges (avg confidence: 0.83)
-- Token cost: 0 input · 0 output
+- 259 nodes · 235 edges · 31 communities detected
+- Extraction: 92% EXTRACTED · 8% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.82)
+- Token cost: 2,300 input · 750 output
 
 ## Community Hubs (Navigation)
-- [[_COMMUNITY_Community 0|Community 0]]
-- [[_COMMUNITY_Community 1|Community 1]]
-- [[_COMMUNITY_Community 2|Community 2]]
-- [[_COMMUNITY_Community 3|Community 3]]
-- [[_COMMUNITY_Community 4|Community 4]]
-- [[_COMMUNITY_Community 5|Community 5]]
-- [[_COMMUNITY_Community 6|Community 6]]
-- [[_COMMUNITY_Community 7|Community 7]]
-- [[_COMMUNITY_Community 8|Community 8]]
-- [[_COMMUNITY_Community 9|Community 9]]
-- [[_COMMUNITY_Community 10|Community 10]]
-- [[_COMMUNITY_Community 11|Community 11]]
-- [[_COMMUNITY_Community 12|Community 12]]
-- [[_COMMUNITY_Community 14|Community 14]]
-- [[_COMMUNITY_Community 15|Community 15]]
-- [[_COMMUNITY_Community 63|Community 63]]
-- [[_COMMUNITY_Community 64|Community 64]]
-- [[_COMMUNITY_Community 65|Community 65]]
+- [[_COMMUNITY_Authentication & Login|Authentication & Login]]
+- [[_COMMUNITY_Community Drives Management|Community Drives Management]]
+- [[_COMMUNITY_Vendor Pickup & Pricing Logic|Vendor Pickup & Pricing Logic]]
+- [[_COMMUNITY_Citizen Request Creation Flow|Citizen Request Creation Flow]]
+- [[_COMMUNITY_Admin Dashboard & Request Assignment|Admin Dashboard & Request Assignment]]
+- [[_COMMUNITY_Core Admin & OTP Mock Utilities|Core Admin & OTP Mock Utilities]]
+- [[_COMMUNITY_Scheduling & Date Utilities|Scheduling & Date Utilities]]
+- [[_COMMUNITY_iOS Native Integration|iOS Native Integration]]
+- [[_COMMUNITY_Citizen Dashboard & Quick Actions|Citizen Dashboard & Quick Actions]]
+- [[_COMMUNITY_Theme & Color Hooks|Theme & Color Hooks]]
+- [[_COMMUNITY_Project Architecture & Documentation|Project Architecture & Documentation]]
+- [[_COMMUNITY_Role-based Tab Layouts|Role-based Tab Layouts]]
+- [[_COMMUNITY_Request Lifecycle Controllers|Request Lifecycle Controllers]]
+- [[_COMMUNITY_Vendor UI & Request Cards|Vendor UI & Request Cards]]
+- [[_COMMUNITY_Citizen Request List|Citizen Request List]]
+- [[_COMMUNITY_Audit Logging & Reporting|Audit Logging & Reporting]]
+- [[_COMMUNITY_Citizen Request Details|Citizen Request Details]]
+- [[_COMMUNITY_Pricing Configuration API|Pricing Configuration API]]
+- [[_COMMUNITY_Auth & Route Protection|Auth & Route Protection]]
+- [[_COMMUNITY_Drive Card UI Utilities|Drive Card UI Utilities]]
+- [[_COMMUNITY_UI Component Library|UI Component Library]]
+- [[_COMMUNITY_Community 21|Community 21]]
+- [[_COMMUNITY_Community 22|Community 22]]
+- [[_COMMUNITY_Community 23|Community 23]]
+- [[_COMMUNITY_Community 24|Community 24]]
+- [[_COMMUNITY_Community 25|Community 25]]
+- [[_COMMUNITY_Community 26|Community 26]]
+- [[_COMMUNITY_Community 27|Community 27]]
+- [[_COMMUNITY_Request Store State|Request Store State]]
+- [[_COMMUNITY_Category Selection UI|Category Selection UI]]
+- [[_COMMUNITY_Global Screen Header|Global Screen Header]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Mock SMS OTP System` - 12 edges
-2. `Production Mode Setup` - 12 edges
-3. `Vendor Assignment Workflow` - 12 edges
-4. `Docker MongoDB Configuration` - 7 edges
-5. `Backend Complete` - 6 edges
-6. `Three User Roles (Citizen, Vendor, Admin)` - 6 edges
-7. `ReactNativeDelegate` - 5 edges
-8. `BMC E-Waste Management System` - 5 edges
-9. `generateOTP()` - 4 edges
+1. `BMC E-Waste Citizen App` - 7 edges
+2. `handleLogout()` - 6 edges
+3. `ReactNativeDelegate` - 6 edges
+4. `generateOTP()` - 5 edges
+5. `loadDashboard()` - 4 edges
+6. `loadRequests()` - 4 edges
+7. `sendOtp()` - 4 edges
+8. `login()` - 4 edges
+9. `useColorScheme()` - 4 edges
 10. `calculatePrice()` - 4 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `calculatePrice()` --semantically_similar_to--> `calculatePrice()`  [INFERRED] [semantically similar]
-  backend/src/utils/helpers.js → src/utils/pricing.ts
-- `Three User Roles (Citizen, Vendor, Admin)` --semantically_similar_to--> `Request Status Flow`  [INFERRED] [semantically similar]
-  README.md → VENDOR_ASSIGNMENT_SYSTEM.md
-- `Three User Roles (Citizen, Vendor, Admin)` --semantically_similar_to--> `User Roles and Permissions`  [INFERRED] [semantically similar]
-  README.md → VENDOR_ASSIGNMENT_SYSTEM.md
-- `Vendor Assignment Workflow` --semantically_similar_to--> `Citizen Usage Flow`  [INFERRED] [semantically similar]
-  VENDOR_ASSIGNMENT_SYSTEM.md → README.md
-- `Vendor Assignment Workflow` --semantically_similar_to--> `Vendor Usage Flow`  [INFERRED] [semantically similar]
-  VENDOR_ASSIGNMENT_SYSTEM.md → README.md
+- `Request Store` --manages_state_for--> `BMC E-Waste Citizen App`  [INFERRED]
+  src/store/requestStore.ts → AGENTS.md
+- `BMC E-Waste Citizen App` --requires--> `MongoDB Setup`  [INFERRED]
+  AGENTS.md → MONGODB_SETUP.md
+- `BMC E-Waste Citizen App` --uses--> `OTP System`  [INFERRED]
+  AGENTS.md → OTP_SYSTEM.md
+- `BMC E-Waste Citizen App` --includes--> `Vendor Assignment System`  [INFERRED]
+  AGENTS.md → VENDOR_ASSIGNMENT_SYSTEM.md
+- `BMC E-Waste Citizen App` --deployable_via--> `Docker Setup`  [INFERRED]
+  AGENTS.md → docker/README.md
 
 ## Communities
 
-### Community 0 - "Community 0"
-Cohesion: 0.13
-Nodes (22): Auto-Registration Feature, Development Mode OTP, Helpers.js OTP Generation, JWT Authentication, Login.tsx Frontend, Mock SMS OTP System, MSG91 SMS Integration, OTP Generation (+14 more)
+### Community 0 - "Authentication & Login"
+Cohesion: 0.21
+Nodes (8): getMe(), login(), sendOtp(), calculatePrice(), generateOTP(), generateToken(), handleLogin(), handleSendOtp()
 
-### Community 1 - "Community 1"
-Cohesion: 0.16
-Nodes (18): Auth Controller Backend, API Endpoints, Backend Complete, Admin Usage Flow, Citizen Usage Flow, Deployment Guide, BMC E-Waste Management System, Pricing Formula (+10 more)
+### Community 1 - "Community Drives Management"
+Cohesion: 0.27
+Nodes (8): createDrive(), deleteDrive(), getDrives(), joinDrive(), updateDrive(), handleJoinDrive(), loadDrives(), onRefresh()
 
-### Community 2 - "Community 2"
-Cohesion: 0.13
-Nodes (6): assignVendor(), generateOTP(), calculateEstimatedPrice(), calculatePrice(), acceptPickup(), completePickup()
-
-### Community 3 - "Community 3"
-Cohesion: 0.16
-Nodes (5): goBack(), handleCategorySelect(), handleSubmit(), resetForm(), createRequest()
-
-### Community 4 - "Community 4"
-Cohesion: 0.15
-Nodes (3): formatDate(), VendorHomeScreen(), formatDate()
-
-### Community 5 - "Community 5"
-Cohesion: 0.2
-Nodes (4): joinDrive(), handleJoinDrive(), loadDrives(), onRefresh()
-
-### Community 6 - "Community 6"
-Cohesion: 0.22
-Nodes (7): login(), sendOtp(), calculatePrice(), generateOTP(), generateToken(), handleLogin(), handleSendOtp()
-
-### Community 7 - "Community 7"
+### Community 2 - "Vendor Pickup & Pricing Logic"
 Cohesion: 0.29
-Nodes (10): MongoDB Docker Quickstart, Database Backup and Restore, Docker MongoDB Configuration, MongoDB Connection Strings, Database Credentials, Production Environment Variables, MongoDB Connection, Database Models (+2 more)
+Nodes (7): calculateEstimatedPrice(), calculatePrice(), acceptPickup(), completePickup(), getPickupById(), getPickups(), startPickup()
 
-### Community 8 - "Community 8"
-Cohesion: 0.36
-Nodes (4): handleAssignVendor(), loadDashboard(), loadRequests(), loadVendors()
+### Community 3 - "Citizen Request Creation Flow"
+Cohesion: 0.38
+Nodes (8): decrementQuantity(), goBack(), handleCategorySelect(), handleContinueToAddress(), handlePickupTypeSelect(), handleSubmit(), incrementQuantity(), resetForm()
 
-### Community 9 - "Community 9"
-Cohesion: 0.32
+### Community 4 - "Admin Dashboard & Request Assignment"
+Cohesion: 0.47
+Nodes (7): calculateStats(), getStatusColor(), handleAssignVendor(), loadDashboard(), loadRequests(), loadVendors(), openAssignModal()
+
+### Community 5 - "Core Admin & OTP Mock Utilities"
+Cohesion: 0.31
+Nodes (5): assignVendor(), getAllRequests(), getVendors(), delay(), generateOTP()
+
+### Community 6 - "Scheduling & Date Utilities"
+Cohesion: 0.39
+Nodes (7): canCancel(), canReschedule(), formatDate(), formatDateTime(), getAvailableDates(), getAvailableTimeSlots(), getRelativeTime()
+
+### Community 7 - "iOS Native Integration"
+Cohesion: 0.31
 Nodes (4): AppDelegate, ReactNativeDelegate, ExpoAppDelegate, ExpoReactNativeFactoryDelegate
 
-### Community 10 - "Community 10"
-Cohesion: 0.4
-Nodes (2): loadRequests(), onRefresh()
+### Community 8 - "Citizen Dashboard & Quick Actions"
+Cohesion: 0.46
+Nodes (6): handleNewRequest(), handleTrackPickup(), handleViewDrives(), handleViewRequests(), loadRequests(), onRefresh()
 
-### Community 11 - "Community 11"
-Cohesion: 0.33
+### Community 9 - "Theme & Color Hooks"
+Cohesion: 0.25
 Nodes (3): RootLayout(), useColorScheme(), useThemeColor()
 
-### Community 12 - "Community 12"
-Cohesion: 0.5
-Nodes (2): loadRequests(), onRefresh()
+### Community 10 - "Project Architecture & Documentation"
+Cohesion: 0.25
+Nodes (7): BMC E-Waste Citizen App, Docker Setup, MongoDB Setup, OTP System, Request Store, UI Design Principles, Vendor Assignment System
 
-### Community 14 - "Community 14"
-Cohesion: 0.4
-Nodes (5): AuthStore State Management, Expo Router Navigation, Frontend Infrastructure, Zustand State Management Stores, Frontend Implementation Guide
-
-### Community 15 - "Community 15"
-Cohesion: 0.5
+### Community 11 - "Role-based Tab Layouts"
+Cohesion: 0.29
 Nodes (1): handleLogout()
 
-### Community 63 - "Community 63"
-Cohesion: 1.0
-Nodes (1): OTP Validation Fix
+### Community 12 - "Request Lifecycle Controllers"
+Cohesion: 0.48
+Nodes (5): cancelRequest(), createRequest(), getRequestById(), getRequests(), scheduleRequest()
 
-### Community 64 - "Community 64"
-Cohesion: 1.0
-Nodes (1): Login Navigation Fix
+### Community 13 - "Vendor UI & Request Cards"
+Cohesion: 0.33
+Nodes (3): VendorHomeScreen(), formatDate(), RequestCard()
 
-### Community 65 - "Community 65"
-Cohesion: 1.0
-Nodes (1): MongoDB Atlas Setup
+### Community 14 - "Citizen Request List"
+Cohesion: 0.6
+Nodes (4): handleCreateRequest(), handleRequestPress(), loadRequests(), onRefresh()
+
+### Community 15 - "Audit Logging & Reporting"
+Cohesion: 0.53
+Nodes (4): getAdminStats(), getAuditLogsByRequest(), getReports(), logAudit()
+
+### Community 16 - "Citizen Request Details"
+Cohesion: 0.6
+Nodes (3): formatDateTime(), handleCancel(), handleRefresh()
+
+### Community 17 - "Pricing Configuration API"
+Cohesion: 0.67
+Nodes (2): getPricing(), updatePricing()
+
+### Community 18 - "Auth & Route Protection"
+Cohesion: 0.67
+Nodes (2): authorize(), protect()
+
+### Community 19 - "Drive Card UI Utilities"
+Cohesion: 0.67
+Nodes (2): formatDate(), formatTime()
+
+### Community 20 - "UI Component Library"
+Cohesion: 0.67
+Nodes (4): StatCard Component, StatusBadge Component, Theme Constants, UI Component Library
+
+### Community 21 - "Community 21"
+Cohesion: 0.67
+Nodes (1): Index()
+
+### Community 22 - "Community 22"
+Cohesion: 0.67
+Nodes (1): AuthLayout()
+
+### Community 23 - "Community 23"
+Cohesion: 0.67
+Nodes (1): PricingScreen()
+
+### Community 24 - "Community 24"
+Cohesion: 0.67
+Nodes (1): ReportsScreen()
+
+### Community 25 - "Community 25"
+Cohesion: 0.67
+Nodes (1): CompletedScreen()
+
+### Community 26 - "Community 26"
+Cohesion: 0.67
+Nodes (1): seedData()
+
+### Community 27 - "Community 27"
+Cohesion: 0.67
+Nodes (1): connectDB()
+
+### Community 28 - "Request Store State"
+Cohesion: 0.67
+Nodes (1): calculateStats()
+
+### Community 29 - "Category Selection UI"
+Cohesion: 0.67
+Nodes (1): CategoryCard()
+
+### Community 30 - "Global Screen Header"
+Cohesion: 0.67
+Nodes (1): Header()
 
 ## Knowledge Gaps
-- **9 isolated node(s):** `OTP Validation Fix`, `Login Navigation Fix`, `MongoDB Atlas Setup`, `CORS Configuration`, `Testing Workflow` (+4 more)
+- **6 isolated node(s):** `UI Design Principles`, `MongoDB Setup`, `OTP System`, `Vendor Assignment System`, `Docker Setup` (+1 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **Thin community `Community 10`** (6 nodes): `dashboard.tsx`, `handleNewRequest()`, `handleViewDrives()`, `handleViewRequests()`, `loadRequests()`, `onRefresh()`
+- **Thin community `Role-based Tab Layouts`** (7 nodes): `_layout.tsx`, `_layout.tsx`, `_layout.tsx`, `_layout.tsx`, `_layout.tsx`, `_layout.tsx`, `handleLogout()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 12`** (5 nodes): `requests.tsx`, `handleCreateRequest()`, `handleRequestPress()`, `loadRequests()`, `onRefresh()`
+- **Thin community `Pricing Configuration API`** (4 nodes): `pricingController.js`, `pricingController.js`, `getPricing()`, `updatePricing()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 15`** (4 nodes): `_layout.tsx`, `_layout.tsx`, `_layout.tsx`, `handleLogout()`
+- **Thin community `Auth & Route Protection`** (4 nodes): `authorize()`, `protect()`, `auth.js`, `auth.js`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 63`** (1 nodes): `OTP Validation Fix`
+- **Thin community `Drive Card UI Utilities`** (4 nodes): `formatDate()`, `formatTime()`, `DriveCard.tsx`, `DriveCard.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 64`** (1 nodes): `Login Navigation Fix`
+- **Thin community `Community 21`** (3 nodes): `index.tsx`, `index.tsx`, `Index()`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
-- **Thin community `Community 65`** (1 nodes): `MongoDB Atlas Setup`
+- **Thin community `Community 22`** (3 nodes): `_layout.tsx`, `_layout.tsx`, `AuthLayout()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 23`** (3 nodes): `pricing.tsx`, `pricing.tsx`, `PricingScreen()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 24`** (3 nodes): `reports.tsx`, `reports.tsx`, `ReportsScreen()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 25`** (3 nodes): `completed.tsx`, `CompletedScreen()`, `completed.tsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 26`** (3 nodes): `seed.js`, `seed.js`, `seedData()`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Community 27`** (3 nodes): `db.js`, `connectDB()`, `db.js`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Request Store State`** (3 nodes): `requestStore.ts`, `calculateStats()`, `requestStore.ts`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Category Selection UI`** (3 nodes): `CategoryCard()`, `CategoryCard.tsx`, `CategoryCard.tsx`
+  Too small to be a meaningful cluster - may be noise or needs more connections extracted.
+- **Thin community `Global Screen Header`** (3 nodes): `Header()`, `Header.tsx`, `Header.tsx`
   Too small to be a meaningful cluster - may be noise or needs more connections extracted.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Production Mode Setup` connect `Community 0` to `Community 1`, `Community 7`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
-- **Why does `Mock SMS OTP System` connect `Community 0` to `Community 1`, `Community 14`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Why does `Backend Complete` connect `Community 1` to `Community 0`, `Community 7`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
-- **Are the 3 inferred relationships involving `Production Mode Setup` (e.g. with `Mock Mode Solution` and `Backend Complete`) actually correct?**
-  _`Production Mode Setup` has 3 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 5 inferred relationships involving `Vendor Assignment Workflow` (e.g. with `OTP Generation` and `Pricing Formula`) actually correct?**
-  _`Vendor Assignment Workflow` has 5 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 3 inferred relationships involving `Docker MongoDB Configuration` (e.g. with `MongoDB Setup` and `MongoDB Connection`) actually correct?**
-  _`Docker MongoDB Configuration` has 3 INFERRED edges - model-reasoned connections that need verification._
-- **Are the 4 inferred relationships involving `Backend Complete` (e.g. with `Quick Setup Guide` and `Tech Stack`) actually correct?**
-  _`Backend Complete` has 4 INFERRED edges - model-reasoned connections that need verification._
+- **Why does `generateOTP()` connect `Core Admin & OTP Mock Utilities` to `Authentication & Login`, `Vendor Pickup & Pricing Logic`?**
+  _High betweenness centrality (0.011) - this node is a cross-community bridge._
+- **Why does `sendOtp()` connect `Authentication & Login` to `Core Admin & OTP Mock Utilities`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `acceptPickup()` connect `Vendor Pickup & Pricing Logic` to `Core Admin & OTP Mock Utilities`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **Are the 5 inferred relationships involving `BMC E-Waste Citizen App` (e.g. with `MongoDB Setup` and `OTP System`) actually correct?**
+  _`BMC E-Waste Citizen App` has 5 INFERRED edges - model-reasoned connections that need verification._
+- **Are the 3 inferred relationships involving `generateOTP()` (e.g. with `assignVendor()` and `sendOtp()`) actually correct?**
+  _`generateOTP()` has 3 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `UI Design Principles`, `MongoDB Setup`, `OTP System` to the rest of the system?**
+  _6 weakly-connected nodes found - possible documentation gaps or missing edges._

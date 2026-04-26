@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, FontSizes, Spacing, BorderRadius } from '../../../constants/theme';
 import { CategoryCard } from '../../../src/components/ui/CategoryCard';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const CATEGORIES = Object.values(Category);
 
@@ -29,6 +30,7 @@ export default function CreateRequestScreen() {
   const [quantity, setQuantity] = useState(1);
   const [address, setAddress] = useState('');
   const [driveDate, setDriveDate] = useState('');
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [step, setStep] = useState<Step>('type');
 
   const { createRequest, isLoading, clearError } = useRequestStore();
@@ -44,8 +46,9 @@ export default function CreateRequestScreen() {
   };
 
   const handleSubmit = async () => {
-    if (!pickupType || !category) {
-      Alert.alert('Error', 'Please complete all required fields');
+    // Validation varies by pickup type
+    if (!pickupType) {
+      Alert.alert('Error', 'Please select a pickup type');
       return;
     }
 
@@ -53,25 +56,30 @@ export default function CreateRequestScreen() {
       clearError();
 
       if (pickupType === 'DRIVE') {
-        // For community drive: address and date are required
+        // Community drive request – address and date are required, category optional
         if (!address.trim()) {
           Alert.alert('Error', 'Please enter a location for the community drive');
           return;
         }
-        if (!driveDate.trim()) {
-          Alert.alert('Error', 'Please enter a preferred date for the community drive');
+        if (!driveDate) {
+          Alert.alert('Error', 'Please select a preferred date for the community drive');
           return;
         }
 
         await createRequest({
-          category,
+          // For community drives, category is optional – use a fallback value if none selected
+          category: category || 'Other Electronics',
           quantity: 1,
           address: address.trim(),
           type: pickupType,
           scheduledTime: driveDate,
         });
       } else {
-        // For home pickup: address is required
+        // Home pickup – category, quantity, and address required
+        if (!category) {
+          Alert.alert('Error', 'Please select a category');
+          return;
+        }
         if (!address.trim()) {
           Alert.alert('Error', 'Please enter your pickup address');
           return;
@@ -107,8 +115,15 @@ export default function CreateRequestScreen() {
     if (step === 'address') {
       setStep('details');
     } else if (step === 'details') {
-      setStep('category');
+      // If drive request, go back to type selection; else go back to category
+      if (pickupType === 'DRIVE') {
+        setStep('type');
+        setPickupType(null);
+      } else {
+        setStep('category');
+      }
     } else if (step === 'category') {
+      // Only possible for home pickup flow
       resetForm();
     } else {
       router.back();
@@ -117,10 +132,17 @@ export default function CreateRequestScreen() {
 
   const handlePickupTypeSelect = (type: PickupType) => {
     setPickupType(type);
-    setStep('category');
+    if (type === 'HOME_PICKUP') {
+      setStep('category');
+    } else {
+      // For community drive, skip category selection
+      setCategory(null);
+      setStep('details');
+    }
   };
 
   const handleCategorySelect = (cat: Category) => {
+    // Only applicable for home pickup flow
     setCategory(cat);
     setStep('details');
   };
@@ -172,20 +194,20 @@ export default function CreateRequestScreen() {
     );
   }
 
-  // Step 2: Category
-  if (step === 'category') {
+  // Step 2: Category (only for Home Pickup)
+  if (step === 'category' && pickupType === 'HOME_PICKUP') {
     return (
       <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>What do you want to recycle?</Text>
             <Text style={styles.stepSubtitle}>Select a category</Text>
-
+            
             <TouchableOpacity style={styles.backButtonSmall} onPress={resetForm}>
               <Ionicons name="arrow-back" size={18} color={Colors.light.muted} />
               <Text style={styles.backButtonTextSmall}>Back to pickup type</Text>
             </TouchableOpacity>
-
+            
             <View style={styles.categoryGrid}>
               {CATEGORIES.map(cat => (
                 <CategoryCard
@@ -248,7 +270,7 @@ export default function CreateRequestScreen() {
             ) : (
               <>
                 <Text style={styles.stepTitle}>Community Drive Request</Text>
-                <Text style={styles.stepSubtitle}>You're requesting BMC to organize a drive</Text>
+                <Text style={styles.stepSubtitle}>You&apos;re requesting BMC to organize a drive</Text>
 
                 <TouchableOpacity style={styles.backButtonSmall} onPress={goBack}>
                   <Ionicons name="arrow-back" size={18} color={Colors.light.muted} />
@@ -257,9 +279,9 @@ export default function CreateRequestScreen() {
 
                 <View style={styles.infoCard}>
                   <Ionicons name="information-circle-outline" size={24} color={Colors.light.tint} />
-                  <Text style={styles.infoText}>
-                    You'll need to provide a location and preferred date. BMC will review your request and send an OTP once approved.
-                  </Text>
+<Text style={styles.infoText}>
+                     You&apos;ll need to provide a location and preferred date. BMC will review your request and send an OTP once approved.
+                   </Text>
                 </View>
 
                 <TouchableOpacity style={styles.nextButton} onPress={handleContinueToAddress}>
@@ -309,14 +331,24 @@ export default function CreateRequestScreen() {
                 textAlignVertical="top"
               />
 
-              <Text style={styles.inputLabel}>Preferred Date</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="DD/MM/YYYY (e.g., 25/12/2024)"
-                placeholderTextColor={Colors.light.muted}
-                value={driveDate}
-                onChangeText={setDriveDate}
-              />
+<Text style={styles.inputLabel}>Preferred Date</Text>
+                <TouchableOpacity style={styles.dateButton} onPress={() => setShowDatePicker(true)}>
+                  <Text style={styles.dateButtonText}>{driveDate ? new Date(driveDate).toLocaleDateString() : 'Select a date'}</Text>
+                </TouchableOpacity>
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={driveDate ? new Date(driveDate) : new Date()}
+                    mode="date"
+                    display="default"
+                    onChange={(event, selectedDate) => {
+                      setShowDatePicker(false);
+                      if (selectedDate) {
+                        // Store as ISO string
+                        setDriveDate(selectedDate.toISOString());
+                      }
+                    }}
+                  />
+                )}
             </>
           )}
 
@@ -334,9 +366,9 @@ export default function CreateRequestScreen() {
           )}
 
           <TouchableOpacity
-            style={[styles.submitButton, (!address.trim() || isLoading) && styles.submitButtonDisabled]}
+            style={[styles.submitButton, (!address.trim() || (pickupType === 'DRIVE' && !driveDate) || isLoading) && styles.submitButtonDisabled]}
             onPress={handleSubmit}
-            disabled={!address.trim() || isLoading}
+            disabled={!address.trim() || (pickupType === 'DRIVE' && !driveDate) || isLoading}
           >
             {isLoading ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -415,6 +447,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.light.border,
   },
+  dateButton: {
+    backgroundColor: Colors.light.surface,
+    borderRadius: BorderRadius.lg,
+    padding: Spacing.lg,
+    marginBottom: Spacing.xl,
+    borderWidth: 1,
+    borderColor: Colors.light.border,
+    alignItems: 'center',
+  },
+  dateButtonText: {
+    color: Colors.light.muted,
+    fontSize: FontSizes.md,
+  },
+
 
   backButtonSmall: { flexDirection: 'row', alignItems: 'center', gap: Spacing.xs, marginBottom: Spacing.lg },
   backButtonTextSmall: { fontSize: FontSizes.sm, color: Colors.light.muted },

@@ -62,6 +62,10 @@ export const vendorApi = {
     apiClient.get<Pickup & { request: Request }>(`/vendor/pickups/${id}`),
   completePickup: (id: string, data: CompletePickupPayload) => 
     apiClient.post<Pickup>(`/vendor/pickups/${id}/complete`, data),
+  getDrives: () =>
+    apiClient.get<Drive[]>('/vendor/drives'),
+  completeDrive: (id: string, data: { otp: string }) =>
+    apiClient.post<Drive>(`/vendor/drives/${id}/complete`, data),
 };
 
 // Transaction endpoints
@@ -101,4 +105,12 @@ export const adminApi = {
     apiClient.get<Array<{ date: string; count: number; amount: number }>>('/admin/reports', { 
       params: { period } 
     }),
+  getVendors: () => 
+    apiClient.get<User[]>('/admin/vendors'),
+  getDriveRequests: () => 
+    apiClient.get<Request[]>('/admin/drive-requests'),
+  approveDriveRequest: (id: string, vendorId: string) => 
+    apiClient.post<Drive>(`/admin/drive-requests/${id}/approve`, { vendorId }),
+  rejectDriveRequest: (id: string) => 
+    apiClient.post<Request>(`/admin/drive-requests/${id}/reject`),
 };

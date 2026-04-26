@@ -35,6 +35,16 @@ const statusConfig: Record<RequestStatus, { label: string; color: string; icon?:
     color: '#EF4444',
     icon: 'close-circle-outline',
   },
+  [RequestStatus.APPROVED]: {
+    label: 'Approved',
+    color: '#10B981',
+    icon: 'checkmark-done-outline',
+  },
+  [RequestStatus.REJECTED]: {
+    label: 'Rejected',
+    color: '#EF4444',
+    icon: 'close-circle-outline',
+  },
 };
 
 export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {

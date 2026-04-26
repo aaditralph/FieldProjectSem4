@@ -3,9 +3,10 @@ const Pickup = require('../models/Pickup');
 const Transaction = require('../models/Transaction');
 const AuditLog = require('../models/AuditLog');
 const PricingConfig = require('../models/PricingConfig');
+const Drive = require('../models/Drive');
 const { calculatePrice, generateOTP } = require('../utils/helpers');
 
-// @desc    Get all pickups for vendor
+// @desc    Get all pickups for vendor (excludes drive requests)
 // @route   GET /vendor/pickups
 // @access  Private (Vendor)
 const getPickups = async (req, res) => {
@@ -13,6 +14,7 @@ const getPickups = async (req, res) => {
     const requests = await Request.find({
       assignedVendorId: req.user.id,
       status: { $in: ['SCHEDULED', 'IN_PROGRESS'] },
+      type: { $ne: 'DRIVE' }, // Exclude drive requests
     })
       .populate('userId', 'name phone address')
       .sort({ scheduledTime: 1 });
@@ -211,10 +213,76 @@ const completePickup = async (req, res) => {
   }
 };
 
+// @desc    Get all drives for vendor
+// @route   GET /vendor/drives
+// @access  Private (Vendor)
+const getDrives = async (req, res) => {
+  try {
+    const drives = await Drive.find({
+      assignedVendorId: req.user.id,
+      completed: false,
+    })
+      .populate('creatorId', 'name phone')
+      .populate('registeredUsers', 'name phone')
+      .sort({ date: 1 });
+
+    res.json(drives);
+  } catch (error) {
+    console.error('Get drives error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
+// @desc    Complete a drive
+// @route   POST /vendor/drives/:id/complete
+// @access  Private (Vendor)
+const completeDrive = async (req, res) => {
+  try {
+    const { otp } = req.body;
+
+    if (!otp) {
+      return res.status(400).json({ message: 'OTP is required' });
+    }
+
+    const drive = await Drive.findOne({
+      _id: req.params.id,
+      assignedVendorId: req.user.id,
+    });
+
+    if (!drive) {
+      return res.status(404).json({ message: 'Drive not found' });
+    }
+
+    // Verify OTP
+    if (drive.otp !== otp) {
+      return res.status(400).json({ message: 'Invalid OTP' });
+    }
+
+    drive.completed = true;
+    drive.completedAt = new Date();
+    await drive.save();
+
+    // Log action
+    await AuditLog.create({
+      action: 'drive_completed',
+      actorId: req.user.id,
+      actorRole: req.user.role,
+      meta: { driveId: drive._id, location: drive.location },
+    });
+
+    res.json(drive);
+  } catch (error) {
+    console.error('Complete drive error:', error);
+    res.status(500).json({ message: 'Server error', error: error.message });
+  }
+};
+
 module.exports = {
   getPickups,
   getPickupById,
   acceptPickup,
   startPickup,
   completePickup,
+  getDrives,
+  completeDrive,
 };

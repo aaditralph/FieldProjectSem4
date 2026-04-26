@@ -48,24 +48,33 @@ export default function VendorTabs() {
         ),
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'My Pickups',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="car-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="completed"
-        options={{
-          title: 'Completed',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="checkmark-done-outline" size={size} color={color} />
-          ),
-        }}
-      />
+       <Tabs.Screen
+         name="index"
+         options={{
+           title: 'My Pickups',
+           tabBarIcon: ({ color, size }) => (
+             <Ionicons name="car-outline" size={size} color={color} />
+           ),
+         }}
+       />
+       <Tabs.Screen
+         name="drives"
+         options={{
+           title: 'Drives',
+           tabBarIcon: ({ color, size }) => (
+             <Ionicons name="calendar-outline" size={size} color={color} />
+           ),
+         }}
+       />
+       <Tabs.Screen
+         name="completed"
+         options={{
+           title: 'Completed',
+           tabBarIcon: ({ color, size }) => (
+             <Ionicons name="checkmark-done-outline" size={size} color={color} />
+           ),
+         }}
+       />
     </Tabs>
   );
 }

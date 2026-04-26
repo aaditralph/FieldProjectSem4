@@ -13,16 +13,18 @@ export interface User {
 
 export interface Request {
   id: string;
-  userId: string;
-  category: Category;
+  userId: string | { _id: string; name: string; phone?: string; address?: string };
+  category?: Category;
   quantity: number;
   address: string;
   status: RequestStatus;
+  type: 'HOME_PICKUP' | 'DRIVE';
   scheduledTime?: string;
   imageUrl?: string;
+  driveId?: string;
+  assignedVendorId?: string | { _id: string; name?: string; phone?: string };
   createdAt: string;
   updatedAt: string;
-  assignedVendorId?: string;
   otp?: string;
 }
 
@@ -51,6 +53,12 @@ export interface Drive {
   date: string;
   capacity: number;
   registeredCount: number;
+  registeredUsers: any[]; // populated User objects
+  assignedVendorId?: any; // populated vendor object
+  creatorId?: any; // populated creator object
+  otp?: string;
+  completed?: boolean;
+  completedAt?: string;
   createdAt: string;
 }
 
@@ -85,7 +93,7 @@ export interface LoginRequest {
 }
 
 export interface CreateRequestPayload {
-  category: Category;
+  category?: Category;
   quantity: number;
   address: string;
   imageUrl?: string;

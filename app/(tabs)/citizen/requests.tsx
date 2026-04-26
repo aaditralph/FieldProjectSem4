@@ -62,6 +62,9 @@ export default function RequestsScreen() {
   };
 
   const filteredRequests = requests.filter(req => {
+    // Only show home pickup requests, exclude drive requests
+    if (req.type && req.type !== 'HOME_PICKUP') return false;
+
     if (activeFilter === 'ALL') return true;
     if (activeFilter === 'ACTIVE') {
       return req.status === RequestStatus.CREATED || req.status === RequestStatus.SCHEDULED || req.status === RequestStatus.IN_PROGRESS;

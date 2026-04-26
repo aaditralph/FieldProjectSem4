@@ -9,13 +9,22 @@ const createRequest = async (req, res) => {
   try {
     const { category, quantity, address, imageUrl, type, driveId, scheduledTime } = req.body;
 
+    const requestType = type || 'HOME_PICKUP';
+
+    // For community drives, category is optional — fall back to 'Other Electronics'
+    const resolvedCategory = category || (requestType === 'DRIVE' ? 'Other Electronics' : undefined);
+
+    if (requestType === 'HOME_PICKUP' && !resolvedCategory) {
+      return res.status(400).json({ message: 'Category is required for home pickup requests' });
+    }
+
     const request = await Request.create({
       userId: req.user.id,
-      category,
-      quantity,
+      category: resolvedCategory,
+      quantity: quantity || 1,
       address,
       imageUrl,
-      type: type || 'HOME_PICKUP',
+      type: requestType,
       driveId,
       scheduledTime,
     });
@@ -26,7 +35,7 @@ const createRequest = async (req, res) => {
       actorId: req.user.id,
       actorRole: req.user.role,
       requestId: request._id,
-      meta: { category, quantity, type },
+      meta: { category: resolvedCategory, quantity, type: requestType },
     });
 
     res.status(201).json(request);

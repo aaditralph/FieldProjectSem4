@@ -11,7 +11,7 @@ const { protect, authorize } = require('../middleware/auth');
 
 router.get('/', getDrives);
 router.post('/', protect, authorize('ADMIN'), createDrive);
-router.post('/:id/join', protect, joinDrive);
+router.post('/:id/join', protect, authorize('CITIZEN'), joinDrive);
 router.put('/:id', protect, authorize('ADMIN'), updateDrive);
 router.delete('/:id', protect, authorize('ADMIN'), deleteDrive);
 

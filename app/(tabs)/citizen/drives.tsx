@@ -1,4 +1,5 @@
 import { useRequestStore } from '@/src/store/requestStore';
+import { useAuthStore } from '@/src/store/authStore';
 import { Drive } from '@/src/types';
 import { useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
@@ -27,6 +28,7 @@ const FILTERS: { key: FilterType; label: string }[] = [
 
 export default function DrivesScreen() {
   const { drives, fetchDrives, joinDrive, isLoading } = useRequestStore();
+  const { user } = useAuthStore();
   const [refreshing, setRefreshing] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('UPCOMING');
   const router = useRouter();
@@ -59,15 +61,13 @@ export default function DrivesScreen() {
         'You have successfully joined the drive. See you there!',
         [{ text: 'OK' }]
       );
-    } catch (error) {
-      Alert.alert('Error', 'Failed to join drive. Please try again.');
+    } catch (error: any) {
+      Alert.alert('Error', error.message || 'Failed to join drive');
     }
   };
 
   const filteredDrives = drives.filter(drive => {
-    if (activeFilter === 'ALL') return true;
-    
-    // Upcoming filter: show drives with date in the future
+    // Only show drives that are in the future
     const driveDate = new Date(drive.date);
     const now = new Date();
     return driveDate > now;
@@ -124,13 +124,17 @@ export default function DrivesScreen() {
       {/* Drives List */}
       <FlatList
         data={filteredDrives}
-        renderItem={({ item }) => (
-          <DriveCard
-            drive={item}
-            onJoin={() => handleJoinDrive(item.id)}
-          />
-        )}
-        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => {
+          const creatorId = typeof item.creatorId === 'object' ? item.creatorId.id : item.creatorId;
+          return (
+            <DriveCard
+              drive={item}
+              showOtp={user ? creatorId === user.id : false}
+              onJoin={() => handleJoinDrive(item.id || item._id)}
+            />
+          );
+        }}
+        keyExtractor={(item) => item.id || item._id}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl

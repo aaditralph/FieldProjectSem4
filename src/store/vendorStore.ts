@@ -1,10 +1,11 @@
 import { create } from 'zustand';
 import { vendorApi } from '../api/endpoints';
 import { mockApi } from '../api/mock';
-import { CompletePickupPayload, Pickup, Request, Transaction } from '../types';
+import { Drive, CompletePickupPayload, Pickup, Request, Transaction } from '../types';
 
 interface VendorState {
   pickups: Request[];
+  drives: Drive[];
   currentPickup: Request | null;
   completionResult: { pickup: Pickup; transaction: Transaction; finalPrice: number } | null;
   isLoading: boolean;
@@ -13,6 +14,8 @@ interface VendorState {
   fetchPickups: () => Promise<void>;
   fetchPickupById: (id: string) => Promise<void>;
   completePickup: (id: string, data: CompletePickupPayload) => Promise<void>;
+  fetchDrives: () => Promise<void>;
+  completeDrive: (id: string) => Promise<void>;
   clearError: () => void;
   clearCompletionResult: () => void;
 }
@@ -21,6 +24,7 @@ const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
 
 export const useVendorStore = create<VendorState>((set, get) => ({
   pickups: [],
+  drives: [],
   currentPickup: null,
   completionResult: null,
   isLoading: false,
@@ -88,6 +92,50 @@ export const useVendorStore = create<VendorState>((set, get) => ({
       set({
         isLoading: false,
         error: error.response?.data?.message || 'Failed to complete pickup',
+      });
+      throw error;
+    }
+  },
+
+  fetchDrives: async () => {
+    try {
+      set({ isLoading: true, error: null });
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.getDrives() };
+      } else {
+        response = await vendorApi.getDrives();
+      }
+      
+      set({ drives: response.data as any, isLoading: false });
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to fetch drives',
+      });
+    }
+  },
+
+  completeDrive: async (id: string, otp: string) => {
+    try {
+      set({ isLoading: true, error: null });
+      let response;
+      
+      if (USE_MOCK) {
+        response = { data: await mockApi.completeDrive(id, { otp }) };
+      } else {
+        response = await vendorApi.completeDrive(id, { otp });
+      }
+      
+      set({ isLoading: false });
+      
+      // Refresh drives list
+      get().fetchDrives();
+    } catch (error: any) {
+      set({
+        isLoading: false,
+        error: error.response?.data?.message || 'Failed to complete drive',
       });
       throw error;
     }

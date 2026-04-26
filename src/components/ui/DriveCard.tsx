@@ -8,6 +8,8 @@ interface DriveCardProps {
   drive: Drive;
   onPress?: () => void;
   onJoin?: () => void;
+  onComplete?: () => void;
+  showOtp?: boolean;
 }
 
 function formatDate(dateString: string): string {
@@ -27,7 +29,7 @@ function formatTime(dateString: string): string {
   });
 }
 
-export function DriveCard({ drive, onPress, onJoin }: DriveCardProps) {
+export function DriveCard({ drive, onPress, onJoin, onComplete, showOtp }: DriveCardProps) {
   const isFull = drive.registeredCount >= drive.capacity;
   const percentage = (drive.registeredCount / drive.capacity) * 100;
   const spotsLeft = drive.capacity - drive.registeredCount;
@@ -72,7 +74,16 @@ export function DriveCard({ drive, onPress, onJoin }: DriveCardProps) {
             {drive.registeredCount} / {drive.capacity} registered
           </Text>
         </View>
-      </View>
+       </View>
+
+      {showOtp && drive.otp && (
+        <View style={styles.otpContainer}>
+          <Ionicons name="key-outline" size={14} color={Colors.light.tint} />
+          <Text style={styles.otpLabel}> OTP: </Text>
+          <Text style={styles.otpValue}>{drive.otp}</Text>
+          <Text style={styles.otpHint}> (share with vendor)</Text>
+        </View>
+      )}
 
       <View style={styles.progressContainer}>
         <View style={styles.progressBar}>
@@ -99,11 +110,22 @@ export function DriveCard({ drive, onPress, onJoin }: DriveCardProps) {
         </TouchableOpacity>
       )}
 
-      {isFull && (
-        <View style={styles.fullButton}>
-          <Text style={styles.fullButtonText}>Drive Full</Text>
-        </View>
-      )}
+       {isFull && (
+         <View style={styles.fullButton}>
+           <Text style={styles.fullButtonText}>Drive Full</Text>
+         </View>
+       )}
+
+       {onComplete && (
+         <TouchableOpacity
+           style={styles.completeButton}
+           onPress={onComplete}
+           activeOpacity={0.7}
+         >
+           <Ionicons name="checkmark-done-outline" size={18} color="#FFFFFF" />
+           <Text style={styles.completeButtonText}>Complete Drive</Text>
+         </TouchableOpacity>
+       )}
     </TouchableOpacity>
   );
 }
@@ -170,6 +192,30 @@ const styles = StyleSheet.create({
     fontSize: FontSizes.sm,
     color: Colors.light.muted,
   },
+  otpContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${Colors.light.tint}15`,
+    padding: Spacing.sm,
+    borderRadius: BorderRadius.md,
+    marginTop: Spacing.md,
+    gap: Spacing.xs,
+  },
+  otpLabel: {
+    fontSize: FontSizes.sm,
+    fontWeight: '600',
+    color: Colors.light.tint,
+  },
+  otpValue: {
+    fontSize: FontSizes.lg,
+    fontWeight: '700',
+    color: Colors.light.tint,
+    letterSpacing: 2,
+  },
+  otpHint: {
+    fontSize: FontSizes.xs,
+    color: Colors.light.muted,
+  },
   progressContainer: {
     marginTop: Spacing.md,
   },
@@ -205,9 +251,24 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.md,
     marginTop: Spacing.md,
   },
-  fullButtonText: {
-    color: Colors.light.muted,
-    fontSize: FontSizes.md,
-    fontWeight: '600',
-  },
-});
+   fullButtonText: {
+     color: Colors.light.muted,
+     fontSize: FontSizes.md,
+     fontWeight: '600',
+   },
+   completeButton: {
+     flexDirection: 'row',
+     alignItems: 'center',
+     justifyContent: 'center',
+     backgroundColor: '#10B981',
+     paddingVertical: Spacing.md,
+     borderRadius: BorderRadius.md,
+     marginTop: Spacing.md,
+     gap: Spacing.xs,
+   },
+   completeButtonText: {
+     color: '#FFFFFF',
+     fontSize: FontSizes.md,
+     fontWeight: '600',
+   },
+ });
