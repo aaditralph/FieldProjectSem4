@@ -12,6 +12,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { COLORS, SPACING, BORDER_RADIUS } from '@/src/theme/Theme';
+import { GlassCard } from '@/src/components/ui/GlassCard';
+import { AnimatedButton } from '@/src/components/ui/AnimatedButton';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
   const [phone, setPhone] = useState('');
@@ -53,180 +58,178 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={styles.container}
-    >
-      <View style={styles.content}>
-        <Text style={styles.title}>BMC E-Waste</Text>
-        <Text style={styles.subtitle}>Recycle Responsibly</Text>
-
-        <View style={styles.form}>
-          <Text style={styles.label}>Phone Number</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter 10-digit phone number"
-            keyboardType="phone-pad"
-            maxLength={10}
-            value={phone}
-            onChangeText={setPhone}
-            editable={!isLoading}
-          />
-          
-          <Text style={styles.label}>Password</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            editable={!isLoading}
-          />
-          
-          <TouchableOpacity
-            style={[styles.button, isLoading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text style={styles.buttonText}>Login</Text>
-            )}
-          </TouchableOpacity>
-          
-          <View style={styles.signupContainer}>
-            <Text style={styles.signupText}>Don't have an account? </Text>
-            <Link href="/(auth)/signup" asChild>
-              <TouchableOpacity>
-                <Text style={styles.signupLink}>Sign Up</Text>
-              </TouchableOpacity>
-            </Link>
+    <LinearGradient colors={['#0B0F19', '#10172A']} style={styles.container}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.container}
+      >
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="leaf" size={40} color={COLORS.primary} />
+            </View>
+            <Text style={styles.title}>BMC E-Waste</Text>
+            <Text style={styles.subtitle}>Recycle Responsibly</Text>
           </View>
 
-          {error && <Text style={styles.errorText}>{error}</Text>}
-        </View>
+          <GlassCard style={styles.form}>
+            <Text style={styles.label}>Phone Number</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter 10-digit phone number"
+              placeholderTextColor={COLORS.textDim}
+              keyboardType="phone-pad"
+              maxLength={10}
+              value={phone}
+              onChangeText={setPhone}
+              editable={!isLoading}
+            />
+            
+            <Text style={styles.label}>Password</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter your password"
+              placeholderTextColor={COLORS.textDim}
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              editable={!isLoading}
+            />
+            
+            <AnimatedButton 
+              title={isLoading ? "Logging in..." : "Login"}
+              onPress={handleLogin}
+              disabled={isLoading}
+              style={{ marginTop: SPACING }}
+              icon="log-in-outline"
+            />
+            
+            <View style={styles.signupContainer}>
+              <Text style={styles.signupText}>Don't have an account? </Text>
+              <Link href="/(auth)/signup" asChild>
+                <TouchableOpacity>
+                  <Text style={styles.signupLink}>Sign Up</Text>
+                </TouchableOpacity>
+              </Link>
+            </View>
 
-        <View style={styles.demoInfo}>
-          <Text style={styles.demoTitle}>📝 Demo Notes:</Text>
-          <Text style={styles.demoText}>• Use password "123456" for demo users</Text>
-          <Text style={styles.demoText}>• Real users need to sign up first</Text>
-        </View>
+            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+          </GlassCard>
 
-        <View style={[styles.demoInfo, styles.demoInfoSmall]}>
-          <Text style={styles.demoTitle}>👥 Demo Accounts:</Text>
-          <Text style={styles.demoText}>Citizen: 9876543210</Text>
-          <Text style={styles.demoText}>Pick Up Everywhere: 9876543211</Text>
-          <Text style={styles.demoText}>Admin: 9876543212</Text>
+          <GlassCard style={styles.demoInfo}>
+            <Text style={styles.demoTitle}>📝 Demo Notes:</Text>
+            <Text style={styles.demoText}>• Use password "123456" for demo users</Text>
+            <Text style={styles.demoText}>• Real users need to sign up first</Text>
+          </GlassCard>
+
+          <GlassCard style={[styles.demoInfo, styles.demoInfoSmall]}>
+            <Text style={styles.demoTitle}>👥 Demo Accounts:</Text>
+            <Text style={styles.demoText}>Citizen: 9876543210</Text>
+            <Text style={styles.demoText}>Pick Up Everywhere: 9876543211</Text>
+            <Text style={styles.demoText}>Admin: 9876543212</Text>
+          </GlassCard>
         </View>
-      </View>
-    </KeyboardAvoidingView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    padding: 24,
+    padding: SPACING * 1.5,
+  },
+  header: {
+    alignItems: 'center',
+    marginBottom: SPACING * 3,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
   title: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: '#2c3e50',
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 18,
-    color: '#7f8c8d',
+    fontSize: 16,
+    color: COLORS.textDim,
     textAlign: 'center',
-    marginBottom: 48,
   },
   form: {
-    backgroundColor: '#fff',
-    padding: 24,
-    borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    padding: SPACING * 1.5,
   },
   label: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: COLORS.text,
     marginBottom: 8,
+    marginLeft: 4,
   },
   input: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: 'rgba(0,0,0,0.2)',
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    borderRadius: 8,
+    borderColor: COLORS.border,
+    borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    marginBottom: 16,
-  },
-  button: {
-    backgroundColor: '#27ae60',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: COLORS.text,
+    marginBottom: SPACING,
   },
   signupContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    marginTop: 20,
+    marginTop: SPACING * 1.5,
   },
   signupText: {
-    color: '#7f8c8d',
+    color: COLORS.textDim,
     fontSize: 14,
   },
   signupLink: {
-    color: '#27ae60',
+    color: COLORS.primary,
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   errorText: {
-    color: '#e74c3c',
+    color: COLORS.danger,
     marginTop: 12,
     textAlign: 'center',
+    fontWeight: '600',
   },
   demoInfo: {
-    marginTop: 32,
-    padding: 16,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#dee2e6',
+    marginTop: SPACING * 2,
+    padding: SPACING,
   },
   demoInfoSmall: {
-    marginTop: 12,
-    padding: 12,
+    marginTop: SPACING,
+    padding: SPACING * 0.75,
   },
   demoTitle: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#2c3e50',
+    fontWeight: '700',
+    color: COLORS.text,
     marginBottom: 8,
   },
   demoText: {
-    fontSize: 12,
-    color: '#7f8c8d',
+    fontSize: 13,
+    color: COLORS.textDim,
     marginBottom: 4,
   },
 });
+

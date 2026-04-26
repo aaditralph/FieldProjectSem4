@@ -11,6 +11,19 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { MotiView } from 'moti';
+
+const COLORS = {
+  background: '#0B0F19',
+  surface: 'rgba(255, 255, 255, 0.05)',
+  primary: '#10B981',
+  text: '#FFFFFF',
+  textDim: '#9CA3AF',
+  border: 'rgba(255, 255, 255, 0.1)',
+  danger: '#EF4444',
+  registered: 'rgba(255, 255, 255, 0.1)',
+  progressBg: 'rgba(255, 255, 255, 0.1)',
+};
 
 export default function DrivesScreen() {
   const { drives, isLoading, fetchDrives, joinDrive } = useRequestStore();
@@ -40,50 +53,58 @@ export default function DrivesScreen() {
     }
   };
 
-  const renderDrive = ({ item }: { item: Drive }) => {
+  const renderDrive = ({ item, index }: { item: Drive; index: number }) => {
     const isFull = item.registeredCount >= item.capacity;
     const isRegistered = item.registeredUsers && user && item.registeredUsers.includes((user as any)._id || user.id);
     const percentage = (item.registeredCount / item.capacity) * 100;
 
     return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.location}>{item.location}</Text>
-          <View style={[styles.badge, isFull ? styles.badgeFull : styles.badgeAvailable]}>
-            <Text style={styles.badgeText}>{isFull ? 'Full' : 'Available'}</Text>
-          </View>
-        </View>
-        <View style={styles.cardBody}>
-          <Text style={styles.detail}>📅 Date: {formatDate(item.date)}</Text>
-          <Text style={styles.detail}>
-            👥 Registrations: {item.registeredCount} / {item.capacity}
-          </Text>
-          <View style={styles.progressBar}>
-            <View
-              style={[
-                styles.progressFill,
-                { width: `${percentage}%`, backgroundColor: isFull ? '#e74c3c' : '#27ae60' },
-              ]}
-            />
-          </View>
-          {isRegistered ? (
-            <View style={[styles.joinButton, styles.registeredButton]}>
-              <Text style={styles.joinButtonText}>✓ Registered</Text>
+      <MotiView
+        from={{ opacity: 0, translateY: 20 }}
+        animate={{ opacity: 1, translateY: 0 }}
+        transition={{ delay: index * 100 }}
+      >
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.location}>{item.location}</Text>
+            <View style={[styles.badge, { backgroundColor: isFull ? `${COLORS.danger}20` : `${COLORS.primary}20` }]}>
+              <Text style={[styles.badgeText, { color: isFull ? COLORS.danger : COLORS.primary }]}>
+                {isFull ? 'Full' : 'Available'}
+              </Text>
             </View>
-          ) : !isFull && (
-            <TouchableOpacity style={styles.joinButton} onPress={() => handleJoinDrive(item)}>
-              <Text style={styles.joinButtonText}>Join Drive</Text>
-            </TouchableOpacity>
-          )}
+          </View>
+          <View style={styles.cardBody}>
+            <Text style={styles.detail}>📅 Date: {formatDate(item.date)}</Text>
+            <Text style={styles.detail}>
+              👥 Registrations: {item.registeredCount} / {item.capacity}
+            </Text>
+            <View style={styles.progressBar}>
+              <View
+                style={[
+                  styles.progressFill,
+                  { width: `${percentage}%`, backgroundColor: isFull ? COLORS.danger : COLORS.primary },
+                ]}
+              />
+            </View>
+            {isRegistered ? (
+              <View style={[styles.joinButton, styles.registeredButton]}>
+                <Text style={[styles.joinButtonText, { color: COLORS.text }]}>✓ Registered</Text>
+              </View>
+            ) : !isFull && (
+              <TouchableOpacity style={styles.joinButton} onPress={() => handleJoinDrive(item)}>
+                <Text style={styles.joinButtonText}>Join Drive</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
-      </View>
+      </MotiView>
     );
   };
 
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#27ae60" />
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
@@ -95,6 +116,7 @@ export default function DrivesScreen() {
         renderItem={renderDrive}
         keyExtractor={(item) => (item as any)._id || item.id || Math.random().toString()}
         contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.empty}>
             <Text style={styles.emptyText}>No upcoming drives</Text>
@@ -111,25 +133,23 @@ export default function DrivesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
   },
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: COLORS.background,
   },
   list: {
     padding: 16,
   },
   card: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -138,42 +158,37 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: COLORS.border,
   },
   location: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
+    fontWeight: '700',
+    color: COLORS.text,
     flex: 1,
   },
   badge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
-  },
-  badgeAvailable: {
-    backgroundColor: '#27ae60',
-  },
-  badgeFull: {
-    backgroundColor: '#e74c3c',
+    borderWidth: 1,
+    borderColor: 'transparent',
   },
   badgeText: {
-    color: '#fff',
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   cardBody: {
     padding: 16,
     paddingTop: 12,
-    gap: 10,
+    gap: 12,
   },
   detail: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: COLORS.textDim,
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#ecf0f1',
+    backgroundColor: COLORS.progressBg,
     borderRadius: 4,
     overflow: 'hidden',
     marginTop: 4,
@@ -183,19 +198,21 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   joinButton: {
-    backgroundColor: '#27ae60',
-    padding: 12,
-    borderRadius: 8,
+    backgroundColor: COLORS.primary,
+    padding: 14,
+    borderRadius: 12,
     alignItems: 'center',
     marginTop: 8,
   },
   joinButtonText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   registeredButton: {
-    backgroundColor: '#95a5a6',
+    backgroundColor: COLORS.registered,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   empty: {
     alignItems: 'center',
@@ -203,12 +220,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#2c3e50',
+    fontWeight: '700',
+    color: COLORS.text,
   },
   emptySubtext: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: COLORS.textDim,
     marginTop: 8,
   },
 });

@@ -12,6 +12,20 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MotiView } from 'moti';
+
+const COLORS = {
+  background: '#0B0F19',
+  surface: 'rgba(255, 255, 255, 0.05)',
+  primary: '#10B981',
+  secondary: '#14B8A6',
+  text: '#FFFFFF',
+  textDim: '#9CA3AF',
+  border: 'rgba(255, 255, 255, 0.1)',
+  danger: '#EF4444',
+  dangerSurface: 'rgba(239, 68, 68, 0.1)',
+};
 
 export default function CreateRequestScreen() {
   const [items, setItems] = useState<{ category: Category; quantity: number }[]>([]);
@@ -31,7 +45,6 @@ export default function CreateRequestScreen() {
       return;
     }
     
-    // Check if category already exists, update quantity
     const existingIndex = items.findIndex(i => i.category === currentCategory);
     if (existingIndex >= 0) {
       const newItems = [...items];
@@ -91,12 +104,16 @@ export default function CreateRequestScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <View style={styles.form}>
         
         {/* CART LIST */}
         {type === 'HOME_PICKUP' && items.length > 0 && (
-          <View style={styles.cartContainer}>
+          <MotiView 
+            from={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            style={styles.cartContainer}
+          >
             <Text style={styles.label}>Items to Pickup</Text>
             {items.map((item, idx) => (
               <View key={idx} style={styles.cartItem}>
@@ -106,11 +123,15 @@ export default function CreateRequestScreen() {
                 </TouchableOpacity>
               </View>
             ))}
-          </View>
+          </MotiView>
         )}
 
         {type === 'HOME_PICKUP' && (
-        <View style={styles.addItemSection}>
+        <MotiView 
+          from={{ opacity: 0, translateY: 20 }}
+          animate={{ opacity: 1, translateY: 0 }}
+          style={styles.addItemSection}
+        >
           <Text style={styles.label}>Select Electronic Item</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoryScroll}>
             {Object.values(Category).map((cat) => (
@@ -139,6 +160,7 @@ export default function CreateRequestScreen() {
             <TextInput
               style={[styles.input, styles.quantityInput]}
               placeholder="e.g., 2"
+              placeholderTextColor={COLORS.textDim}
               keyboardType="number-pad"
               value={currentQuantity}
               onChangeText={setCurrentQuantity}
@@ -147,78 +169,95 @@ export default function CreateRequestScreen() {
               <Text style={styles.addButtonText}>Add Item</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </MotiView>
         )}
 
-        <Text style={styles.label}>Pickup Address / Location</Text>
-        <TextInput
-          style={[styles.input, styles.textArea]}
-          placeholder="Enter your complete address or location"
-          value={address}
-          onChangeText={setAddress}
-          multiline
-          numberOfLines={3}
-        />
+        <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }} transition={{ delay: 100 }}>
+          <Text style={styles.label}>Pickup Address / Location</Text>
+          <TextInput
+            style={[styles.input, styles.textArea]}
+            placeholder="Enter your complete address or location"
+            placeholderTextColor={COLORS.textDim}
+            value={address}
+            onChangeText={setAddress}
+            multiline
+            numberOfLines={3}
+          />
+        </MotiView>
 
         {type === 'DRIVE' && (
-          <>
+          <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }}>
             <Text style={styles.label}>Requested Drive Date (YYYY-MM-DD)</Text>
             <TextInput
               style={styles.input}
               placeholder="e.g. 2026-05-15"
+              placeholderTextColor={COLORS.textDim}
               value={scheduledTime}
               onChangeText={setScheduledTime}
             />
-          </>
+          </MotiView>
         )}
 
-        <Text style={styles.label}>Request Type</Text>
-        <View style={styles.typeContainer}>
-          <TouchableOpacity
-            style={[
-              styles.typeButton,
-              type === 'HOME_PICKUP' && styles.typeButtonActive,
-            ]}
-            onPress={() => setType('HOME_PICKUP')}
-          >
-            <Text
+        <MotiView from={{ opacity: 0, translateY: 20 }} animate={{ opacity: 1, translateY: 0 }} transition={{ delay: 200 }}>
+          <Text style={styles.label}>Request Type</Text>
+          <View style={styles.typeContainer}>
+            <TouchableOpacity
               style={[
-                styles.typeText,
-                type === 'HOME_PICKUP' && styles.typeTextActive,
+                styles.typeButton,
+                type === 'HOME_PICKUP' && styles.typeButtonActive,
               ]}
+              onPress={() => setType('HOME_PICKUP')}
             >
-              Home Pickup
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.typeButton,
-              type === 'DRIVE' && styles.typeButtonActive,
-            ]}
-            onPress={() => setType('DRIVE')}
-          >
-            <Text
+              <Text
+                style={[
+                  styles.typeText,
+                  type === 'HOME_PICKUP' && styles.typeTextActive,
+                ]}
+              >
+                Home Pickup
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
               style={[
-                styles.typeText,
-                type === 'DRIVE' && styles.typeTextActive,
+                styles.typeButton,
+                type === 'DRIVE' && styles.typeButtonActive,
               ]}
+              onPress={() => setType('DRIVE')}
             >
-              Community Drive
-            </Text>
-          </TouchableOpacity>
-        </View>
+              <Text
+                style={[
+                  styles.typeText,
+                  type === 'DRIVE' && styles.typeTextActive,
+                ]}
+              >
+                Community Drive
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </MotiView>
 
-        <TouchableOpacity
-          style={[styles.submitButton, isLoading && styles.submitButtonDisabled]}
-          onPress={handleSubmit}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>Submit Bulk Request</Text>
-          )}
-        </TouchableOpacity>
+        <MotiView from={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 300 }}>
+          <TouchableOpacity
+            style={[styles.submitButtonContainer, isLoading && styles.submitButtonDisabled]}
+            onPress={handleSubmit}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            <LinearGradient
+              colors={[COLORS.primary, COLORS.secondary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.submitGradient}
+            >
+              {isLoading ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <Text style={styles.submitButtonText}>Submit Bulk Request</Text>
+              )}
+            </LinearGradient>
+          </TouchableOpacity>
+        </MotiView>
+        <View style={{ height: 40 }} />
       </View>
     </ScrollView>
   );
@@ -227,7 +266,7 @@ export default function CreateRequestScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: COLORS.background,
   },
   form: {
     padding: 20,
@@ -236,64 +275,64 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#2c3e50',
+    color: COLORS.text,
     marginBottom: 8,
   },
   cartContainer: {
-    backgroundColor: '#e8f8f5',
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#1abc9c',
+    borderColor: 'rgba(16, 185, 129, 0.3)',
     marginBottom: 8,
   },
   cartItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingVertical: 8,
+    paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#d1f2eb',
+    borderBottomColor: 'rgba(16, 185, 129, 0.2)',
   },
   cartItemText: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#16a085',
+    color: COLORS.primary,
   },
   removeText: {
-    color: '#e74c3c',
+    color: COLORS.danger,
     fontWeight: 'bold',
     fontSize: 14,
   },
   addItemSection: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.surface,
     padding: 16,
-    borderRadius: 8,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: COLORS.border,
   },
   categoryScroll: {
-    marginBottom: 12,
+    marginBottom: 16,
   },
   categoryChip: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginRight: 8,
     borderRadius: 20,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: COLORS.border,
   },
   categoryChipActive: {
-    backgroundColor: '#3498db',
-    borderColor: '#3498db',
+    backgroundColor: COLORS.primary,
+    borderColor: COLORS.primary,
   },
   categoryText: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: COLORS.textDim,
   },
   categoryTextActive: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#000',
+    fontWeight: '700',
   },
   addItemRow: {
     flexDirection: 'row',
@@ -304,21 +343,22 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   input: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#dee2e6',
-    borderRadius: 8,
+    borderColor: COLORS.border,
+    borderRadius: 12,
     padding: 16,
     fontSize: 16,
+    color: COLORS.text,
   },
   addButton: {
-    backgroundColor: '#3498db',
+    backgroundColor: COLORS.secondary,
     paddingHorizontal: 20,
     justifyContent: 'center',
-    borderRadius: 8,
+    borderRadius: 12,
   },
   addButtonText: {
-    color: '#fff',
+    color: '#000',
     fontWeight: 'bold',
   },
   textArea: {
@@ -332,37 +372,39 @@ const styles = StyleSheet.create({
   typeButton: {
     flex: 1,
     padding: 16,
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    borderRadius: 12,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#dee2e6',
+    borderColor: COLORS.border,
     alignItems: 'center',
   },
   typeButtonActive: {
-    backgroundColor: '#27ae60',
-    borderColor: '#27ae60',
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: COLORS.primary,
   },
   typeText: {
     fontSize: 14,
-    color: '#7f8c8d',
+    color: COLORS.textDim,
   },
   typeTextActive: {
-    color: '#fff',
-    fontWeight: '600',
+    color: COLORS.primary,
+    fontWeight: '700',
   },
-  submitButton: {
-    backgroundColor: '#27ae60',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
+  submitButtonContainer: {
     marginTop: 8,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  submitGradient: {
+    padding: 16,
+    alignItems: 'center',
   },
   submitButtonDisabled: {
     opacity: 0.6,
   },
   submitButtonText: {
-    color: '#fff',
+    color: '#000',
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700',
   },
 });

@@ -28,14 +28,14 @@ export default function CitizenTabs() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#27ae60',
-        tabBarInactiveTintColor: '#95a5a6',
+        tabBarActiveTintColor: '#10B981',
+        tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopColor: '#dee2e6',
+          backgroundColor: '#0B0F19',
+          borderTopColor: 'rgba(255, 255, 255, 0.1)',
         },
         headerStyle: {
-          backgroundColor: '#27ae60',
+          backgroundColor: '#0B0F19',
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
@@ -43,13 +43,22 @@ export default function CitizenTabs() {
         },
         headerRight: () => (
           <TouchableOpacity onPress={handleLogout} style={{ marginRight: 16 }}>
-            <Ionicons name="log-out-outline" size={24} color="#fff" />
+            <Ionicons name="log-out-outline" size={24} color="#10B981" />
           </TouchableOpacity>
         ),
       }}
     >
       <Tabs.Screen
         name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="requests"
         options={{
           title: 'My Requests',
           tabBarIcon: ({ color, size }) => (
@@ -60,7 +69,7 @@ export default function CitizenTabs() {
       <Tabs.Screen
         name="create"
         options={{
-          title: 'Create Request',
+          title: 'Schedule',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle-outline" size={size} color={color} />
           ),
