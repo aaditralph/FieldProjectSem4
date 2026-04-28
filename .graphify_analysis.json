@@ -1,0 +1,513 @@
+{
+  "communities": {
+    "0": [
+      "app_tabs_citizen_drives_tsx",
+      "app_tabs_vendor_drives_tsx",
+      "backend_src_controllers_drivecontroller_js",
+      "drivecontroller_createdrive",
+      "drivecontroller_deletedrive",
+      "drivecontroller_getdrives",
+      "drivecontroller_joindrive",
+      "drivecontroller_updatedrive",
+      "drives_confirmcomplete",
+      "drives_formatdate",
+      "drives_handlecompletepress",
+      "drives_handlejoindrive",
+      "drives_loaddrives",
+      "drives_onrefresh",
+      "drives_renderdrive",
+      "vendorcontroller_completedrive"
+    ],
+    "1": [
+      "app_tabs_citizen_create_tsx",
+      "backend_src_controllers_requestcontroller_js",
+      "create_decrementquantity",
+      "create_goback",
+      "create_handlecategoryselect",
+      "create_handlecontinuetoaddress",
+      "create_handlepickuptypeselect",
+      "create_handlesubmit",
+      "create_incrementquantity",
+      "create_resetform",
+      "requestcontroller_cancelrequest",
+      "requestcontroller_createrequest",
+      "requestcontroller_getrequestbyid",
+      "requestcontroller_getrequests",
+      "requestcontroller_schedulerequest"
+    ],
+    "2": [
+      "admincontroller_approvedriverequest",
+      "admincontroller_assignvendor",
+      "admincontroller_getallrequests",
+      "admincontroller_getdriverequests",
+      "admincontroller_getvendors",
+      "admincontroller_rejectdriverequest",
+      "backend_src_controllers_admincontroller_js",
+      "drive_requests_handleapproveconfirm",
+      "mock_delay",
+      "mock_generateotp",
+      "src_api_mock_ts",
+      "vendorcontroller_acceptpickup"
+    ],
+    "3": [
+      "app_auth_login_tsx",
+      "authcontroller_getme",
+      "authcontroller_login",
+      "authcontroller_sendotp",
+      "backend_src_controllers_authcontroller_js",
+      "backend_src_utils_helpers_js",
+      "helpers_calculateprice",
+      "helpers_generateotp",
+      "helpers_generatetoken",
+      "login_handlelogin",
+      "login_handlesendotp"
+    ],
+    "4": [
+      "backend_src_controllers_vendorcontroller_js",
+      "pricing_calculateestimatedprice",
+      "pricing_calculateprice",
+      "src_utils_pricing_ts",
+      "vendorcontroller_completepickup",
+      "vendorcontroller_getdrives",
+      "vendorcontroller_getpickupbyid",
+      "vendorcontroller_getpickups",
+      "vendorcontroller_startpickup"
+    ],
+    "5": [
+      "app_tabs_admin_index_tsx",
+      "index_calculatestats",
+      "index_getstatuscolor",
+      "index_handleassignvendor",
+      "index_loaddashboard",
+      "index_loadrequests",
+      "index_loadvendors",
+      "index_openassignmodal"
+    ],
+    "6": [
+      "scheduling_cancancel",
+      "scheduling_canreschedule",
+      "scheduling_formatdate",
+      "scheduling_formatdatetime",
+      "scheduling_getavailabledates",
+      "scheduling_getavailabletimeslots",
+      "scheduling_getrelativetime",
+      "src_utils_scheduling_ts"
+    ],
+    "7": [
+      "app_tabs_citizen_dashboard_tsx",
+      "dashboard_handlenewrequest",
+      "dashboard_handletrackpickup",
+      "dashboard_handleviewdrives",
+      "dashboard_handleviewrequests",
+      "dashboard_loadrequests",
+      "dashboard_onrefresh"
+    ],
+    "8": [
+      "app_tabs_admin_drive_requests_tsx",
+      "drive_requests_formatdate",
+      "drive_requests_handleapprovepress",
+      "drive_requests_handlerejectpress",
+      "drive_requests_loaddata",
+      "drive_requests_onrefresh"
+    ],
+    "9": [
+      "app_layout_tsx",
+      "hooks_use_color_scheme_web_ts",
+      "hooks_use_theme_color_ts",
+      "layout_rootlayout",
+      "use_color_scheme_web_usecolorscheme",
+      "use_theme_color_usethemecolor"
+    ],
+    "10": [
+      "app_tabs_citizen_requests_tsx",
+      "requests_handlecreaterequest",
+      "requests_handlerequestpress",
+      "requests_loadrequests",
+      "requests_onrefresh"
+    ],
+    "11": [
+      "auditcontroller_getadminstats",
+      "auditcontroller_getauditlogsbyrequest",
+      "auditcontroller_getreports",
+      "auditcontroller_logaudit",
+      "backend_src_controllers_auditcontroller_js"
+    ],
+    "12": [
+      "app_tabs_vendor_index_tsx",
+      "index_vendorhomescreen",
+      "requestcard_formatdate",
+      "requestcard_requestcard",
+      "src_components_ui_requestcard_tsx"
+    ],
+    "13": [
+      "app_tabs_admin_layout_tsx",
+      "app_tabs_citizen_layout_tsx",
+      "app_tabs_vendor_layout_tsx",
+      "layout_handlelogout"
+    ],
+    "14": [
+      "app_tabs_citizen_request_id_tsx",
+      "id_formatdatetime",
+      "id_handlecancel",
+      "id_handlerefresh"
+    ],
+    "15": [
+      "backend_src_controllers_pricingcontroller_js",
+      "pricingcontroller_getpricing",
+      "pricingcontroller_updatepricing"
+    ],
+    "16": [
+      "auth_authorize",
+      "auth_protect",
+      "backend_src_middleware_auth_js"
+    ],
+    "17": [
+      "drivecard_formatdate",
+      "drivecard_formattime",
+      "src_components_ui_drivecard_tsx"
+    ],
+    "18": [
+      "app_index_tsx",
+      "index_index"
+    ],
+    "19": [
+      "app_auth_layout_tsx",
+      "layout_authlayout"
+    ],
+    "20": [
+      "app_tabs_admin_pricing_tsx",
+      "pricing_pricingscreen"
+    ],
+    "21": [
+      "app_tabs_admin_reports_tsx",
+      "reports_reportsscreen"
+    ],
+    "22": [
+      "app_tabs_vendor_completed_tsx",
+      "completed_completedscreen"
+    ],
+    "23": [
+      "backend_scripts_seed_js",
+      "seed_seeddata"
+    ],
+    "24": [
+      "backend_src_config_db_js",
+      "db_connectdb"
+    ],
+    "25": [
+      "categorycard_categorycard",
+      "src_components_ui_categorycard_tsx"
+    ],
+    "26": [
+      "header_header",
+      "src_components_ui_header_tsx"
+    ],
+    "27": [
+      "eslint_config_js"
+    ],
+    "28": [
+      "app_tabs_index_tsx"
+    ],
+    "29": [
+      "backend_src_server_js"
+    ],
+    "30": [
+      "backend_src_models_auditlog_js"
+    ],
+    "31": [
+      "backend_src_models_drive_js"
+    ],
+    "32": [
+      "backend_src_models_pickup_js"
+    ],
+    "33": [
+      "backend_src_models_pricingconfig_js"
+    ],
+    "34": [
+      "backend_src_models_request_js"
+    ],
+    "35": [
+      "backend_src_models_transaction_js"
+    ],
+    "36": [
+      "backend_src_models_user_js"
+    ],
+    "37": [
+      "backend_src_routes_adminroutes_js"
+    ],
+    "38": [
+      "backend_src_routes_auditroutes_js"
+    ],
+    "39": [
+      "backend_src_routes_authroutes_js"
+    ],
+    "40": [
+      "backend_src_routes_driveroutes_js"
+    ],
+    "41": [
+      "backend_src_routes_pricingroutes_js"
+    ],
+    "42": [
+      "backend_src_routes_requestroutes_js"
+    ],
+    "43": [
+      "backend_src_routes_vendorroutes_js"
+    ],
+    "44": [
+      "theme_constants"
+    ],
+    "45": [
+      "docker_mongodb_init_mongo_js"
+    ],
+    "46": [
+      "hooks_use_color_scheme_ts"
+    ],
+    "47": [
+      "src_api_client_ts"
+    ],
+    "48": [
+      "src_api_endpoints_ts"
+    ],
+    "49": [
+      "src_store_adminstore_ts"
+    ],
+    "50": [
+      "src_store_authstore_ts"
+    ],
+    "51": [
+      "request_store"
+    ],
+    "52": [
+      "src_store_vendorstore_ts"
+    ],
+    "53": [
+      "src_types_enums_ts"
+    ],
+    "54": [
+      "src_types_index_ts"
+    ],
+    "55": [
+      "src_components_ui_emptystate_tsx"
+    ],
+    "56": [
+      "src_components_ui_quickactionbutton_tsx"
+    ],
+    "57": [
+      "stat_card"
+    ],
+    "58": [
+      "src_components_ui_statusbadge_tsx"
+    ],
+    "59": [
+      "ui_components"
+    ]
+  },
+  "cohesion": {
+    "0": 0.13,
+    "1": 0.14,
+    "2": 0.18,
+    "3": 0.2,
+    "4": 0.25,
+    "5": 0.36,
+    "6": 0.25,
+    "7": 0.33,
+    "8": 0.4,
+    "9": 0.33,
+    "10": 0.5,
+    "11": 0.4,
+    "12": 0.4,
+    "13": 0.5,
+    "14": 0.5,
+    "15": 0.67,
+    "16": 0.67,
+    "17": 0.67,
+    "18": 1.0,
+    "19": 1.0,
+    "20": 1.0,
+    "21": 1.0,
+    "22": 1.0,
+    "23": 1.0,
+    "24": 1.0,
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0,
+    "32": 1.0,
+    "33": 1.0,
+    "34": 1.0,
+    "35": 1.0,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0,
+    "39": 1.0,
+    "40": 1.0,
+    "41": 1.0,
+    "42": 1.0,
+    "43": 1.0,
+    "44": 1.0,
+    "45": 1.0,
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0,
+    "52": 1.0,
+    "53": 1.0,
+    "54": 1.0,
+    "55": 1.0,
+    "56": 1.0,
+    "57": 1.0,
+    "58": 1.0,
+    "59": 1.0
+  },
+  "gods": [
+    {
+      "id": "mock_generateotp",
+      "label": "generateOTP()",
+      "degree": 5
+    },
+    {
+      "id": "layout_handlelogout",
+      "label": "handleLogout()",
+      "degree": 3
+    },
+    {
+      "id": "index_loaddashboard",
+      "label": "loadDashboard()",
+      "degree": 3
+    },
+    {
+      "id": "index_loadrequests",
+      "label": "loadRequests()",
+      "degree": 3
+    },
+    {
+      "id": "drives_onrefresh",
+      "label": "onRefresh()",
+      "degree": 3
+    },
+    {
+      "id": "admincontroller_approvedriverequest",
+      "label": "approveDriveRequest()",
+      "degree": 3
+    },
+    {
+      "id": "authcontroller_sendotp",
+      "label": "sendOtp()",
+      "degree": 3
+    },
+    {
+      "id": "authcontroller_login",
+      "label": "login()",
+      "degree": 3
+    },
+    {
+      "id": "use_color_scheme_web_usecolorscheme",
+      "label": "useColorScheme()",
+      "degree": 3
+    },
+    {
+      "id": "pricing_calculateprice",
+      "label": "calculatePrice()",
+      "degree": 3
+    }
+  ],
+  "surprises": [
+    {
+      "source": "RootLayout()",
+      "target": "useColorScheme()",
+      "source_files": [
+        "app/_layout.tsx",
+        "/home/aaditralph/Desktop/Projects/Field Project/Rewrite/FieldProjectSem4/hooks/use-color-scheme.web.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "assignVendor()",
+      "target": "generateOTP()",
+      "source_files": [
+        "/home/aaditralph/Desktop/Projects/Field_Project/Rewrite/FieldProjectSem4/backend/src/controllers/adminController.js",
+        "/home/aaditralph/Desktop/Projects/Field_Project/Rewrite/FieldProjectSem4/src/api/mock.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; peripheral node `assignVendor()` unexpectedly reaches hub `generateOTP()`"
+    },
+    {
+      "source": "sendOtp()",
+      "target": "generateOTP()",
+      "source_files": [
+        "/home/aaditralph/Desktop/Projects/Field Project/Rewrite/FieldProjectSem4/backend/src/controllers/authController.js",
+        "/home/aaditralph/Desktop/Projects/Field_Project/Rewrite/FieldProjectSem4/src/api/mock.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; bridges separate communities"
+    },
+    {
+      "source": "acceptPickup()",
+      "target": "generateOTP()",
+      "source_files": [
+        "/home/aaditralph/Desktop/Projects/Field_Project/Rewrite/FieldProjectSem4/backend/src/controllers/vendorController.js",
+        "/home/aaditralph/Desktop/Projects/Field_Project/Rewrite/FieldProjectSem4/src/api/mock.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; peripheral node `acceptPickup()` unexpectedly reaches hub `generateOTP()`"
+    },
+    {
+      "source": "handleSendOtp()",
+      "target": "sendOtp()",
+      "source_files": [
+        "/home/aaditralph/Desktop/Projects/Field Project/Rewrite/FieldProjectSem4/app/(auth)/login.tsx",
+        "/home/aaditralph/Desktop/Projects/Field Project/Rewrite/FieldProjectSem4/backend/src/controllers/authController.js"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `generateOTP()` connect `Community 2` to `Community 3`?",
+      "why": "High betweenness centrality (0.056) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `acceptPickup()` connect `Community 2` to `Community 4`?",
+      "why": "High betweenness centrality (0.043) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `completeDrive()` connect `Community 0` to `Community 4`?",
+      "why": "High betweenness centrality (0.035) - this node is a cross-community bridge."
+    },
+    {
+      "type": "verify_inferred",
+      "question": "Are the 4 inferred relationships involving `generateOTP()` (e.g. with `assignVendor()` and `approveDriveRequest()`) actually correct?",
+      "why": "`generateOTP()` has 4 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `Theme Constants`, `Request Store`, `StatCard Component` to the rest of the system?",
+      "why": "4 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.13 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.14 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

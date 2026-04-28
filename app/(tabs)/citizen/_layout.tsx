@@ -1,29 +1,30 @@
-import { useAuthStore } from '@/src/store/authStore';
-import { Ionicons } from '@expo/vector-icons';
-import { Tabs, useRouter } from 'expo-router';
-import { Alert, StyleSheet, TouchableOpacity, View } from 'react-native';
-import { Colors, Spacing, FontSizes, BorderRadius } from '../../../constants/theme';
+import { useAuthStore } from "@/src/store/authStore";
+import { Ionicons } from "@expo/vector-icons";
+import { Tabs, useRouter } from "expo-router";
+import { Alert, StyleSheet, TouchableOpacity, View } from "react-native";
+import {
+  Colors,
+  Spacing,
+  FontSizes,
+  BorderRadius,
+} from "../../../constants/theme";
 
 export default function CitizenTabs() {
   const router = useRouter();
   const { logout, user } = useAuthStore();
 
   const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Logout',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            (router as any).replace('/(auth)/login');
-          },
+    Alert.alert("Logout", "Are you sure you want to logout?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Logout",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          (router as any).replace("/(auth)/login");
         },
-      ]
-    );
+      },
+    ]);
   };
 
   return (
@@ -40,16 +41,16 @@ export default function CitizenTabs() {
         },
         tabBarLabelStyle: {
           fontSize: FontSizes.xs,
-          fontWeight: '500',
+          fontWeight: "500",
         },
         headerStyle: {
           backgroundColor: Colors.light.tint,
-          shadowColor: 'transparent',
+          shadowColor: "transparent",
           elevation: 0,
         },
-        headerTintColor: '#FFFFFF',
+        headerTintColor: "#FFFFFF",
         headerTitleStyle: {
-          fontWeight: '600',
+          fontWeight: "600",
         },
         headerShadowVisible: false,
       }}
@@ -57,11 +58,11 @@ export default function CitizenTabs() {
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Home',
+          title: "Home",
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <Ionicons name="grid-outline" size={size} color={color} />
           ),
-          headerTitle: 'EcoConnect',
+          headerTitle: "Scrapify",
           headerRight: () => (
             <TouchableOpacity
               onPress={handleLogout}
@@ -73,42 +74,42 @@ export default function CitizenTabs() {
           ),
         }}
       />
-       <Tabs.Screen
-         name="requests"
-         options={{
-           title: 'Home Visits',
-           tabBarIcon: ({ color, size }) => (
-             <Ionicons name="home-outline" size={size} color={color} />
-           ),
-         }}
-       />
+      <Tabs.Screen
+        name="requests"
+        options={{
+          title: "Home Visits",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home-outline" size={size} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="create"
         options={{
-          title: 'Create',
+          title: "Create",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="add-circle-outline" size={size} color={color} />
           ),
-          headerTitle: 'New Request',
+          headerTitle: "New Request",
         }}
       />
-<Tabs.Screen
-      name="drives"
-      options={{
-        title: 'Drives',
-        tabBarIcon: ({ color, size }) => (
-          <Ionicons name="people-outline" size={size} color={color} />
-        ),
-      }}
-    />
-    {/* Hide the request detail screen from tab bar */}
-    <Tabs.Screen
-      name="request/[id]"
-      options={{
-        href: null,
-      }}
-    />
-  </Tabs>
+      <Tabs.Screen
+        name="drives"
+        options={{
+          title: "Drives",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      {/* Hide the request detail screen from tab bar */}
+      <Tabs.Screen
+        name="request/[id]"
+        options={{
+          href: null,
+        }}
+      />
+    </Tabs>
   );
 }
 
